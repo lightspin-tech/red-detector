@@ -1,6 +1,5 @@
 import json
 import time
-
 import boto3.ec2
 import random
 import script2
@@ -29,7 +28,6 @@ def gen_port():
 
 
 def generate_security_group(client, port):
-    # selected_name = input("Select security group name: ")
     group_name = "vuls-sg-{}".format(port)
     vpcs = client.describe_vpcs(
         Filters=[
@@ -67,13 +65,10 @@ def generate_security_group(client, port):
 
 
 def create_ec2(client, selected_az, region):
-    # key_name = create_keypair()
-    key_name = "snapshot_key"
+    key_name = create_keypair()
     rand_port = gen_port()
     security_group_id = generate_security_group(client, rand_port)
-    # security_group_id = 'SECURITY_GROUP3'
 
-    lightspin_image_id = 'ami-0a40794b3cedc3a8e'
     ubuntu20_image_id = 'ami-0885b1f6bd170450c'
     user_data = script2.script_a.format(region=region)
 
@@ -147,10 +142,6 @@ def attach_volume_to_ec2(client, ec2_inst_id, ss_volume_id):
 
 
 def scan_and_report(instance_ip, rand_port, instance_id):
-# def scan_and_report():
-#     instance_id = '	i-0e946932f88ee061a'
-#     instance_ip = '3.236.204.117'
-#     rand_port = '29045'
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privet_key = paramiko.RSAKey.from_private_key_file("my_key.pem")
@@ -160,7 +151,6 @@ def scan_and_report(instance_ip, rand_port, instance_id):
             ssh.connect(hostname=instance_ip, username='ubuntu', pkey=privet_key, timeout=1200)
             connect = 1
         except Exception as e:
-            # print(e)
             print("Connecting to instance...")
 
     counter = 0
@@ -183,44 +173,15 @@ def scan_and_report(instance_ip, rand_port, instance_id):
     # mount_list = []
     stdin, stdout, stderr = ssh.exec_command("lsblk --json -fs")
     lsblk = json.loads(stdout.read())
-    # stdin, stdout, stderr = ssh.exec_command("lsblk --json")
-    # lsblk_size = json.loads(stdout.read())
-    # print(lsblk)
-    # print(lsblk_size)
     for item in lsblk["blockdevices"]:
         if item["fstype"] in ["ext2", "xfs", "ext3", "ext4"] and not(item['mountpoint']):
             mount_dev = f"/dev/{item['name']}"
             mount_list.append(mount_dev)
-    print(mount_list)
-
-    # stdin, stdout, stderr = ssh.exec_command(
-    #     script2.script_b.format(port=rand_port, ip_address=instance_ip, instance_id=instance_id,
-    #                             mount_point="/dev/xvdm1"))
-    # stderr = stderr.readlines()
-    # if stderr:
-    #     print("Errors:")
-    #     for line in stderr:
-    #         print(line)
 
     for i in range(len(mount_list)):
         stdin, stdout, stderr = ssh.exec_command(script2.script_b.format(port=rand_port, ip_address=instance_ip, instance_id=instance_id, mount_point=mount_list[i]))
-        # stdout = stdout.readlines()
-        # stderr = stderr.readlines()
-        # if stderr:
-        #     print("Errors:")
-        #     for line in stderr:
-        #         print(line)
 
     stdin, stdout, stderr = ssh.exec_command(script2.script_c.format(port=rand_port, ip_address=instance_ip,instance_id=instance_id))
-
-    # stdout = stdout.readlines()
-    # stderr = stderr.readlines()
-    # if stderr:
-    #     print("Errors:")
-    #     for line in stderr:
-    #         print(line)
-    # for line in stdout:
-    #     print(line)
 
     counter = 0
     while counter < 30:
@@ -233,7 +194,6 @@ def scan_and_report(instance_ip, rand_port, instance_id):
         else:
             counter += 1
             time.sleep(1)
-
 
     ssh.close()
     print("Error: can not create UI report")
