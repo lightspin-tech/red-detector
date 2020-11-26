@@ -20,7 +20,7 @@ Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/e
     11. "DescribeVpcs"
     12. "CreateSecurityGroup"
     13. "DescribeVolumes"
-    14. "CreateSnapshot"
+    14. "CreateSnapshot"\
   You can find the policy containing these requierments under red-sonar-policy.json.
 
 2. Running EC2 instance - Make sure you know the region and instance id of the EC2 instance you would like to scan.
