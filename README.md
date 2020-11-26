@@ -6,7 +6,7 @@ Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/e
 
 
 ## Requirements
-1. Configured AWS account with the EC2 actions mentioned below.\The policy containing these requirements can be found in red-sonar-policy.json.
+1. Configured AWS account with the EC2 actions mentioned below. The policy containing these requirements can be found in red-sonar-policy.json.
     1. "AttachVolume"
     2. "AuthorizeSecurityGroupIngress"
     3. "DescribeInstances"
