@@ -1,3 +1,5 @@
+![red-detector](https://github.com/lightspin-tech/red-detector/blob/main/red-detector.png)
+
 # Red-Detector
 
 ## Description
