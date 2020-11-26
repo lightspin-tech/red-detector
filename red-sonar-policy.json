@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AttachVolume",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:DescribeInstances",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeVpcs",
+                "ec2:CreateKeyPair",
+                "ec2:CreateSecurityGroup",
+                "ec2:DescribeRegions",
+                "ec2:CreateSnapshot",
+                "ec2:RunInstances",
+                "ec2:ReportInstanceStatus",
+                "ec2:CreateVolume",
+				"ec2:DescribeSnapshots",
+				"ec2:DescribeVolumes"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
