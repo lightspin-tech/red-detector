@@ -170,7 +170,7 @@ def scan_and_report(instance_ip, rand_port, instance_id):
 
     print("EC2 instance is ready\n")
     print("Scanning...")
-    # mount_list = []
+    mount_list = []
     stdin, stdout, stderr = ssh.exec_command("lsblk --json -fs")
     lsblk = json.loads(stdout.read())
     for item in lsblk["blockdevices"]:
