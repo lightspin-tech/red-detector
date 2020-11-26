@@ -1,4 +1,4 @@
-# Red-Sonar
+# Red-Detector
 
 ## Description
 Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/en/).
