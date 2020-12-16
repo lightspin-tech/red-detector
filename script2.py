@@ -150,13 +150,12 @@ cat ~/.ssh/id_rsa_vuls.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/*
 
 cd /home/ubuntu/vuls
-abc=/home/ubuntu/vuls
 
 echo "Scanning..."
 sudo docker run --rm -i \
 -v ~/.ssh:/root/.ssh:ro \
--v $abc:/vuls \
--v $abc/vuls-log:/var/log/vuls \
+-v $PWD:/vuls \
+-v $PWD/vuls-log:/var/log/vuls \
 -v /etc/localtime:/etc/localtime:ro \
 -v /etc/timezone:/etc/timezone:ro \
 vuls/vuls scan \
@@ -165,8 +164,8 @@ vuls/vuls scan \
 echo "Creating report..."
 sudo docker run --rm -i \
     -v ~/.ssh:/root/.ssh:ro \
-    -v $abc:/vuls \
-    -v $abc/vuls-log:/var/log/vuls \
+    -v $PWD:/vuls \
+    -v $PWD/vuls-log:/var/log/vuls \
     -v /etc/localtime:/etc/localtime:ro \
     vuls/vuls report \
     -format-list \
