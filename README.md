@@ -9,9 +9,9 @@ Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/e
 
 ## Requirements
 1. Configured AWS account with the EC2 actions mentioned below. The policy containing these requirements can be found in red-detector-policy.json.
-| Required action premission | Why it is required |
-| --------------------- | ------------------------------------------ |
-| "AttachVolume" | Enables attaching the volume with the taken snapshot to the EC2 instance that is being used for the vulnerabilities scan. |
+ Required action premission | Why it is required |
+ --------------------- | ------------------------------------------ |
+ "AttachVolume" | Enables attaching the volume with the taken snapshot to the EC2 instance that is being used for the vulnerabilities scan. |
 | "AuthorizeSecurityGroupIngress" | Enables attaching security group to the EC2 instance. Contains IP premmisions to ssh port and a random port generated for the scan UI access. |
 | "DescribeInstances" | Enables access to the clients EC2 instances details. |
 | "CreateKeyPair" | Enables the creation of a key pair that is being used as the key of the EC2 instance. |
