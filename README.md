@@ -9,20 +9,21 @@ Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/e
 
 ## Requirements
 1. Configured AWS account with the EC2 actions mentioned below. The policy containing these requirements can be found in red-detector-policy.json.
-    1. "AttachVolume"
-    2. "AuthorizeSecurityGroupIngress"
-    3. "DescribeInstances"
-    4. "CreateKeyPair"
-    5. "DescribeRegions"
-    6. "RunInstances"
-    7. "ReportInstanceStatus"
-    8. "DescribeSnapshots"
-    9. "CreateVolume"
-    10. "DescribeAvailabilityZones"
-    11. "DescribeVpcs"
-    12. "CreateSecurityGroup"
-    13. "DescribeVolumes"
-    14. "CreateSnapshot"
+| Required action premission | Why it is required |
+| --- | --- |
+| "AttachVolume" | Enables attaching the volume with the taken snapshot to the EC2 instance that is being used for the vulnerabilities scan. |
+| "AuthorizeSecurityGroupIngress" | Enables attaching security group to the EC2 instance. Contains IP premmisions to ssh port and a random port generated for the scan UI access. |
+| "DescribeInstances" | Enables access to the clients EC2 instances details. |
+| "CreateKeyPair" | Enables the creation of a key pair that is being used as the key of the EC2 instance. |
+| "DescribeRegions" | Enables access to the clients active regions to enable the user select the relevant one for the scan. |
+| "RunInstances" | Enables the creation of an EC2 instance under the users client. |
+| "ReportInstanceStatus" | Enables getting the current status of the created EC2 instance to make sure it is running. |
+| "DescribeSnapshots" | Enables getting the current status of the taken snapshot to make sure it is available. |
+| "CreateVolume" | Enables the creation of a volume, in order to attach it the taken snapshot and attach it to the EC2 instance used for the vulnerabilities scan. |
+| "DescribeAvailabilityZones" | Enables access to the clients active availability zones to select one for the created volume that is being attach to the EC2 instance. |
+| "DescribeVpcs" | Enables getting the clinets default vpc. Used for the EC2s security group generation. |
+| "CreateSecurityGroup" | Enables the creation of a security group that is being attached to the EC2 instance. |
+| "CreateSnapshot" | Enables taking a snapshot. Used to take a snapshot of the chosen EC2 instance. |
  
 
 2. Running EC2 instance - Make sure you know the region and instance id of the EC2 instance you would like to scan.
