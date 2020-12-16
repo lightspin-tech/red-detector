@@ -10,7 +10,7 @@ Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/e
 ## Requirements
 1. Configured AWS account with the EC2 actions mentioned below. The policy containing these requirements can be found in red-detector-policy.json.
 
-Actions details
+Actions details:
 
 | Required action premission | Why it is required |
 | --------------------- | ------------------------------------------ |
