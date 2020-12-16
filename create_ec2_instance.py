@@ -192,16 +192,8 @@ def scan_and_report(client, instance_ip, rand_port, instance_id, snapshot_id):
 
     for i in range(len(mount_list)):
         stdin, stdout, stderr = ssh.exec_command(script2.script_b.format(port=rand_port, ip_address=instance_ip, instance_id=instance_id, mount_point=mount_list[i]))
-        if stderr:
-            print(f"Errors {i}:")
-            for line in stderr:
-                print(line)
 
     stdin, stdout, stderr = ssh.exec_command(script2.script_c.format(port=rand_port, ip_address=instance_ip,instance_id=instance_id))
-    if stderr:
-        print("Errors:")
-        for line in stderr:
-            print(line)
 
     counter = 0
     while counter < 30:
