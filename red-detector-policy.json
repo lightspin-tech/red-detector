@@ -18,7 +18,6 @@
                 "ec2:ReportInstanceStatus",
                 "ec2:CreateVolume",
 		"ec2:DescribeSnapshots",
-		"ec2:DescribeVolumes"
             ],
             "Resource": "*"
         }
