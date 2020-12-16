@@ -7,7 +7,6 @@ import paramiko
 import subprocess
 
 ec2 = boto3.resource('ec2')
-iam_client = boto3.client('iam')
 
 
 def create_keypair():
@@ -210,13 +209,14 @@ def scan_and_report(client, instance_ip, rand_port, instance_id, snapshot_id):
         if stdout.read():
             print("\nCheck the report at: http://{ip_address}:{port}".format(ip_address=instance_ip, port=rand_port))
             print("Finished scanning and created a report")
-            ssh.close()
-            return
         else:
             print(counter)
             counter += 1
             time.sleep(1)
 
+    if counter == 30:
+        print("Error: can not create UI report")
+
     ssh.close()
     client.delete_snapshot(SnapshotId=snapshot_id)
-    print("Error: can not create UI report")
+    return
