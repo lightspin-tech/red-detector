@@ -63,3 +63,6 @@ python3 main.py
     Make sure to choose a valide answer (the number left to the desired id).
 3. Track the process progress... It takes about 30 minutes.
 4. Get a link to your report!
+
+## License
+This repository is available under the [Apache License 2.0](https://github.com/lightspin-tech/red-detector/blob/main/LICENSE).
