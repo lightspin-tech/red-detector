@@ -76,7 +76,7 @@ docker run --rm -i \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
     
-cat > config1.toml <<EOF
+cat > config_scan.toml <<EOF
 [servers]
 [servers.host]
 host        = "172.17.0.1"
@@ -87,7 +87,7 @@ keyPath     = "/root/.ssh/id_rsa_vuls"
 scanMode    = ["fast"]
 EOF
 
-cat > config.toml <<EOF
+cat > config_db.toml <<EOF
 [cveDict]
 type = "sqlite3"
 SQLite3Path = "/vuls/cve.sqlite3"
@@ -150,27 +150,26 @@ cat ~/.ssh/id_rsa_vuls.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/*
 
 cd /home/ubuntu/vuls
-abc=/home/ubuntu/vuls
 
 echo "Scanning..."
 sudo docker run --rm -i \
--v ~/.ssh:/root/.ssh:ro \
--v $abc:/vuls \
--v $abc/vuls-log:/var/log/vuls \
+-v /home/ubuntu/.ssh:/root/.ssh:ro \
+-v /home/ubuntu/vuls:/vuls \
+-v /home/ubuntu/vuls/vuls-log:/var/log/vuls \
 -v /etc/localtime:/etc/localtime:ro \
 -v /etc/timezone:/etc/timezone:ro \
 vuls/vuls scan \
--config=./config1.toml
+-config=config_scan.toml
 
 echo "Creating report..."
 sudo docker run --rm -i \
-    -v ~/.ssh:/root/.ssh:ro \
-    -v $abc:/vuls \
-    -v $abc/vuls-log:/var/log/vuls \
+    -v /home/ubuntu/.ssh:/root/.ssh:ro \
+    -v /home/ubuntu/vuls:/vuls \
+    -v /home/ubuntu/vuls/vuls-log:/var/log/vuls \
     -v /etc/localtime:/etc/localtime:ro \
     vuls/vuls report \
     -format-list \
-    -config=./config.toml
+    -config=config_db.toml
 
 touch /tmp/script.finished
 cd /

@@ -4,14 +4,15 @@ import boto3.ec2
 import random
 import script2
 import paramiko
+import subprocess
 
 ec2 = boto3.resource('ec2')
-iam_client = boto3.client('iam')
+# iam_client = boto3.client('iam')
 
 
 def create_keypair():
     # Create keypair
-    key_name='snapshot_key'
+    key_name='red_detector_key'
     new_keypair = ec2.create_key_pair(KeyName=key_name)
 
     # Save key as pem file
@@ -27,7 +28,16 @@ def gen_port():
     return port
 
 
+def check_own_ip_address():
+    curl_process = subprocess.Popen(
+        ["curl", "-4", "ifconfig.co"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    curl_process.wait()
+    return curl_process.stdout.read().decode("utf-8").strip()
+
+
 def generate_security_group(client, port):
+    ip_address = check_own_ip_address()
     group_name = "vuls-sg-{}".format(port)
     vpcs = client.describe_vpcs(
         Filters=[
@@ -50,26 +60,29 @@ def generate_security_group(client, port):
             {'IpProtocol': 'tcp',
              'FromPort': 22,
              'ToPort': 22,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
-            {'IpProtocol': 'tcp',
-             'FromPort': 80,
-             'ToPort': 80,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+             'IpRanges': [{'CidrIp': str(ip_address)+"/32"}]},
             {'IpProtocol': 'tcp',
              'FromPort': port,
              'ToPort': port,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+             'IpRanges': [{'CidrIp': str(ip_address)+"/32"}]}
         ])
 
     return security_group_id
 
 
 def create_ec2(client, selected_az, region):
-    key_name = create_keypair()
+    # key_name = create_keypair()
+    key_name = 'snapshot_key1'
     rand_port = gen_port()
     security_group_id = generate_security_group(client, rand_port)
 
     ubuntu20_image_id = 'ami-0885b1f6bd170450c'
+    print("""Legal image owner is "Canonical" (id = 099720109477)""")
+    image = ec2.Image(ubuntu20_image_id)
+    print("\nVerifying image owner...\nEC2 image owner id is: " + str(image.owner_id) + "\n")
+    if image.owner_id != '099720109477':
+        print("Illigal owner id... Exiting...")
+
     user_data = script2.script_a.format(region=region)
 
     print("Creating EC2 instance...")
@@ -141,20 +154,20 @@ def attach_volume_to_ec2(client, ec2_inst_id, ss_volume_id):
     print("Finished attaching volume to instance.")
 
 
-def scan_and_report(instance_ip, rand_port, instance_id):
+def scan_and_report(client, instance_ip, rand_port, instance_id, snapshot_id):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privet_key = paramiko.RSAKey.from_private_key_file("my_key.pem")
     connect = 0
     while not connect:
         try:
-            ssh.connect(hostname=instance_ip, username='ubuntu', pkey=privet_key, timeout=1200)
+            ssh.connect(hostname=instance_ip, username='ubuntu', pkey=privet_key)
             connect = 1
         except Exception as e:
             print("Connecting to instance...")
 
     counter = 0
-    print("Updating the scanner databases... It takes about 30 minutes")
+    print("Updating the scanners' databases... It takes about 30 minutes")
     while counter < 30:
         stdin, stdout, stderr = ssh.exec_command('ls /tmp/userData.finished')
         if stdout.read():
@@ -179,24 +192,30 @@ def scan_and_report(instance_ip, rand_port, instance_id):
             mount_list.append(mount_dev)
 
     for i in range(len(mount_list)):
-        stdin, stdout, stderr = ssh.exec_command(script2.script_b.format(port=rand_port, ip_address=instance_ip, instance_id=instance_id, mount_point=mount_list[i]))
-
-    stdin, stdout, stderr = ssh.exec_command(script2.script_c.format(port=rand_port, ip_address=instance_ip,instance_id=instance_id))
+        stdin, stdout, stderr = ssh.exec_command(
+            script2.script_b.format(port=rand_port, ip_address=instance_ip, instance_id=instance_id,
+                                    mount_point=mount_list[i]))
 
     counter = 0
     while counter < 30:
         stdin, stdout, stderr = ssh.exec_command('ls /tmp/script.finished')
         if stdout.read():
+            stdin, stdout, stderr = ssh.exec_command(
+                script2.script_c.format(port=rand_port, ip_address=instance_ip, instance_id=instance_id))
             print("\nCheck the report at: http://{ip_address}:{port}".format(ip_address=instance_ip, port=rand_port))
             print("Finished scanning and created a report")
-            ssh.close()
-            return
+            break
         else:
             counter += 1
             time.sleep(1)
 
+    if counter == 30:
+        print("Error: can not create UI report")
+
     ssh.close()
-    print("Error: can not create UI report")
+    client.delete_snapshot(SnapshotId=snapshot_id)
+    return
+
 
 
 

@@ -83,13 +83,13 @@ def select_ec2_instance(client):
         if counter == 30:
             print("Wrong input... Exiting...")
             exit()
-        val = input("Please select a number in the range of {}\n".format(len(inst_id)))
+        val = input("Please select a number in the range of 0 to {}\n".format(len(inst_id)-1))
 
     # selected_ec2_id = inst_id[int(val)]
     selected_ec2_vol_id = inst_vol[int(val)]
 
     # returns selected ec2 instance volume id
-    print("Done selecting EC2 instance")
+    print("Done selecting EC2 instance\n")
     return selected_ec2_vol_id
 
 
@@ -108,6 +108,12 @@ def snapshot2volume(client, volume_id):
     snapshot = client.create_snapshot(
         Description='Root volume snapshot',
         VolumeId=volume_id,
+        TagSpecifications=[
+            {
+                'ResourceType': 'snapshot',
+                'Tags': [{'Key': 'Name', 'Value': 'Red-detector-snapshot'}],
+            },
+        ],
     )
     ss_id = snapshot['SnapshotId']
 
@@ -128,7 +134,7 @@ def snapshot2volume(client, volume_id):
     print("Waiting for volume to be available...")
     client.get_waiter('volume_available').wait(VolumeIds=[ss_volume_id])
 
-    print("Done creating volume")
-    return ss_volume_id, selected_az
+    print("Done creating volume\n")
+    return ss_volume_id, selected_az, ss_id
 
 
