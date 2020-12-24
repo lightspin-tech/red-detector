@@ -159,7 +159,7 @@ sudo docker run --rm -i \
 -v /etc/localtime:/etc/localtime:ro \
 -v /etc/timezone:/etc/timezone:ro \
 vuls/vuls scan \
--config=config_scan.toml
+-config=./config_scan.toml
 
 echo "Creating report..."
 sudo docker run --rm -i \
@@ -169,7 +169,7 @@ sudo docker run --rm -i \
     -v /etc/localtime:/etc/localtime:ro \
     vuls/vuls report \
     -format-list \
-    -config=config_db.toml
+    -config=./config_db.toml
 
 touch /tmp/script.finished
 cd /
