@@ -1,4 +1,4 @@
-![red-detector](https://github.com/lightspin-tech/red-detector/blob/main/red-detector.png)
+![red-detector](red-detector.png)
 
 # Red-Detector
 
@@ -18,15 +18,20 @@ Actions details:
 | "AuthorizeSecurityGroupIngress" | Enables attaching security group to the EC2 instance. Contains IP premmisions to ssh port and a random port generated for the scan UI access. |
 | "DescribeInstances" | Enables access to the clients EC2 instances details. |
 | "CreateKeyPair" | Enables the creation of a key pair that is being used as the key of the EC2 instance. |
+| "CreateTags" | Enabled the creation of Tags on the Volume and Snapshot. |
 | "DescribeRegions" | Enables access to the clients active regions to enable the user select the relevant one for the scan. |
 | "RunInstances" | Enables the creation of an EC2 instance under the users client. |
 | "ReportInstanceStatus" | Enables getting the current status of the created EC2 instance to make sure it is running. |
 | "DescribeSnapshots" | Enables getting the current status of the taken snapshot to make sure it is available. |
+| "DescribeImages" | Enables querying AMI's to get the latest Ubuntu AMI. |
+| "DescribeVolumeStatus" | Enables getting the current status of the volume being created. |
+| "DescribeVolumes" | Enables getting details about a volume. |
 | "CreateVolume" | Enables the creation of a volume, in order to attach it the taken snapshot and attach it to the EC2 instance used for the vulnerabilities scan. |
 | "DescribeAvailabilityZones" | Enables access to the clients active availability zones to select one for the created volume that is being attach to the EC2 instance. |
-| "DescribeVpcs" | Enables getting the clinets default vpc. Used for the EC2s security group generation. |
+| "DescribeVpcs" | Enables getting the clients default vpc. Used for the EC2s security group generation. |
 | "CreateSecurityGroup" | Enables the creation of a security group that is being attached to the EC2 instance. |
 | "CreateSnapshot" | Enables taking a snapshot. Used to take a snapshot of the chosen EC2 instance. |
+| "DeleteSnapshot" | Enables deleting the stale snapshot was created during the process |
  
 
 2. Running EC2 instance - Make sure you know the region and instance id of the EC2 instance you would like to scan.
@@ -40,7 +45,6 @@ Supported versions:
 
 
 ## Installation
-Bash
 ```bash
 sudo git clone https://github.com/lightspin-tech/red-detector.git
 pip3 install -r requirements.txt
@@ -48,11 +52,21 @@ pip3 install -r requirements.txt
 
 
 
-## Usage  
-Bash
+## Usage
+### Interactive
 ```bash
-cd red-detector
 python3 main.py
+```
+### Command arguments
+```bash
+usage: main.py [-h] [--region REGION] [--instance-id INSTANCE_ID] [--keypair KEYPAIR] [--log-level LOG_LEVEL]
+
+optional arguments:
+  -h, --help                show this help message and exit
+  --region REGION           region name
+  --instance-id INSTANCE_ID EC2 instance id
+  --keypair KEYPAIR         existing key pair name
+  --log-level LOG_LEVEL log level
 ```
 
 ## Flow
@@ -63,6 +77,13 @@ python3 main.py
     Make sure to choose a valide answer (the number left to the desired id).
 3. Track the process progress... It takes about 30 minutes.
 4. Get a link to your report!
+
+## Troubleshooting
+### verbouse logging
+```python3 main.py --log-level DEBUG```
+### scanners databases update process
+1. connect to the EC2 instance created ```ssh ubuntu@PUBLICIP -i KEYPAIR.pem```
+2. watch the progress ```tail /var/log/user-data.log```
 
 ## License
 This repository is available under the [Apache License 2.0](https://github.com/lightspin-tech/red-detector/blob/main/LICENSE).
