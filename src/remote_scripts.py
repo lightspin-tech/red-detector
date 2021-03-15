@@ -84,7 +84,7 @@ port        = "2222"
 user        = "root"
 sshConfigPath = "/root/.ssh/config"
 keyPath     = "/root/.ssh/id_rsa_vuls"
-scanMode    = ["fast"]
+scanMode    = ["fast-root", "offline"]
 EOF
 
 cat > config_db.toml <<EOF
@@ -123,11 +123,10 @@ if [ -f "$FILE" ]; then
 /bin/rm -f ~/.ssh/id_rsa_vuls
 /bin/rm -f ~/.ssh/id_rsa_vuls.pub
 ssh-keygen -q -f ~/.ssh/id_rsa_vuls -N ""
-sudo cp /vol/root/.ssh/authorized_keys /tmp/
-sudo chmod 766 /tmp/authorized_keys
-sudo cat ~/.ssh/id_rsa_vuls.pub >> /tmp/authorized_keys
-sudo mv /tmp/authorized_keys /vol/root/.ssh/authorized_keys
-sudo chmod 600 /vol/root/.ssh/authorized_keys
+sudo cat ~/.ssh/id_rsa_vuls.pub > /tmp/tmp_authorized_keys
+sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
+sudo chown root:root /vol/root/.ssh/tmp_authorized_keys 
+sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
 
 sudo mount -t proc none /vol/proc
 sudo mount -o bind /dev /vol/dev
@@ -135,20 +134,15 @@ sudo mount -o bind /sys /vol/sys
 sudo mount -o bind /run /vol/run
 
 sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
-sudo su -c "chroot /vol /usr/sbin/sshd -p 2222"
+sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
 
 echo "Creating ssh config"
 sudo cat > ~/.ssh/config <<EOF
 Host *
     StrictHostKeyChecking no
 EOF
+
 PWD=/home/ubuntu/vuls/
-
-echo "Generating ssh keys..."
-ssh-keygen -q -f ~/.ssh/id_rsa_vuls -N "" -y
-cat ~/.ssh/id_rsa_vuls.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/*
-
 cd /home/ubuntu/vuls
 
 echo "Scanning..."
@@ -172,16 +166,8 @@ sudo docker run --rm -i \
     -config=./config_db.toml
 
 touch /tmp/script.finished
-cd /
-sudo umount /vol/dev/pts
-sudo umount /vol/proc
-sudo umount /vol/dev
-sudo umount /vol/sys
-sudo umount /vol/run
-sudo pkill -9 -f "/usr/sbin/sshd -p 2222"
+sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
 fi
-sudo umount {mount_point}
-
 '''
 
 script_c = '''
@@ -189,7 +175,6 @@ set -ex
 echo "Starting report webUI..."
 
 cd /home/ubuntu/vuls
-abc=/home/ubuntu
 
 sudo docker run -dt --name vuls-report-srv-{instance_id} \
     -v $PWD:/vuls \
