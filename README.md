@@ -1,10 +1,14 @@
-![red-detector](red-detector.png)
+![red-detector](static/red-detector.png)
 
 # Red-Detector
 
 ## Description
 Scan your EC2 instance to find its vulnerabilities using Vuls (https://vuls.io/en/).
-![](vuls-gif.gif)
+
+Audit your EC2 instance to find security misconfigurations using Lynis (https://cisofy.com/solutions/#lynis).
+
+Scan your EC2 instance for signs of a rootkit using Chkrootkit (http://www.chkrootkit.org/).
+![](static/vuls-gif.gif)
 
 
 ## Requirements
