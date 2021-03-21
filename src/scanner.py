@@ -124,7 +124,7 @@ class Scanner:
             instances = self.client.run_instances(
                 BlockDeviceMappings=[
                     {
-                        'DeviceName': '/dev/sdh',
+                        'DeviceName': '/dev/sda1',
                         'Ebs': {
                             'VolumeSize': 40,
                         },
