@@ -1,4 +1,4 @@
-import subprocess  # for python 3 only.
+import subprocess
 import json
 import datetime
 import threading
