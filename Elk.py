@@ -12,7 +12,7 @@ import time
 es = Elasticsearch(
     'localhost:9200'
 )
-sudo_pass = 'Idan2408'  # sudo password of the machine
+sudo_pass = ''  # sudo password of the machine
 sudo_password = "echo " + sudo_pass + " | sudo -S "
 
 
@@ -46,7 +46,7 @@ def vuls(vuls_root):
         vuls/vuls report \
         -format-list \
         -config=./config.toml # path to report.toml in docker'
-    sudo_password = "echo 'Idan2408' | sudo -S command"
+    sudo_password = "echo 'password' | sudo -S command"
     #  From what I understand, the line above is not supposed to work, but it is.
     #  So I don't touch it for now :)
     commands = ["cd /", "cd " + vuls_root, sudo_password,
@@ -162,7 +162,7 @@ def lynis(directory):
 
     try_later_maybe = "export HISTIGNORE='*sudo -S*"
     to_execute = ""
-    sudo_password = "echo 'Idan2408' | sudo -S"  # Idan2408 is the sudo password.
+    sudo_password = "echo 'password' | sudo -S"  # password is the sudo password.
     commands = ["cd /", "cd " + directory, sudo_password, sudo_password + " ./lynis audit system"]
     for i in commands:
         to_execute += i + ';'
