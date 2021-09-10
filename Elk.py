@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # probably for python 3 only.
 import json
 import datetime
 import threading
@@ -12,8 +12,6 @@ import time
 es = Elasticsearch(
     'localhost:9200'
 )
-sudo_pass = ''  # sudo password of the machine
-sudo_password = "echo " + sudo_pass + " | sudo -S "
 
 
 def escape_ansi(line):
@@ -27,7 +25,7 @@ def escape_ansi(line):
     return ansi_escape.sub('', line)
 
 
-def vuls(vuls_root):
+def vuls(vuls_root, sudo_password):
     data = {}
     vuls_scan = 'sudo docker run --rm \
         -v ~/.ssh:/root/.ssh:ro \
@@ -46,7 +44,7 @@ def vuls(vuls_root):
         vuls/vuls report \
         -format-list \
         -config=./config.toml # path to report.toml in docker'
-    sudo_password = "echo 'password' | sudo -S command"
+    sudo_password += sudo_password+ " command"
     #  From what I understand, the line above is not supposed to work, but it is.
     #  So I don't touch it for now :)
     commands = ["cd /", "cd " + vuls_root, sudo_password,
@@ -88,8 +86,7 @@ def vuls(vuls_root):
         index += 1
 
 
-
-def chkrotkit():
+def chkrotkit(sudo_password):
     second_commnd = "chkrootkit"
     commands = ["cd /", sudo_password + " " + second_commnd]
     to_execute = ""  # the string that will run in the terminal at the end
@@ -158,11 +155,10 @@ def chkrotkit():
         index += 1
 
 
-def lynis(directory):
+def lynis(directory, sudo_password):
 
     try_later_maybe = "export HISTIGNORE='*sudo -S*"
     to_execute = ""
-    sudo_password = "echo 'password' | sudo -S"  # password is the sudo password.
     commands = ["cd /", "cd " + directory, sudo_password, sudo_password + " ./lynis audit system"]
     for i in commands:
         to_execute += i + ';'
@@ -230,6 +226,9 @@ def send_json_to_ELK(file_name, index_name):
 
 
 def main():
+    sudo_pass = ''  # sudo password of the machine
+    sudo_password = "echo " + sudo_pass + " | sudo -S "
+
     begin_time = datetime.datetime.now()
     # getting the date:
     date_and_hour = datetime.datetime.now()
@@ -241,25 +240,25 @@ def main():
 
     # prepared threads for later, running takes a lot of time.
     # now it doesnt run in parallelity because of the .join()
-    t_rootkit = threading.Thread(target=chkrotkit)
+    t_rootkit = threading.Thread(target=chkrotkit, args=(sudo_password,))
     t_rootkit.start()
     t_rootkit.join()
 
-    t_vuls = threading.Thread(target=vuls, args=(vuls_directory,))
+    t_vuls = threading.Thread(target=vuls, args=(vuls_directory,sudo_password,))
     t_vuls.start()
     t_vuls.join()
 
-    t_lynis = threading.Thread(target=lynis,  args=(lynis_directory,))
+    t_lynis = threading.Thread(target=lynis,  args=(lynis_directory, sudo_password))
     t_lynis.start()
     t_lynis.join()
 
     # well, sending the jsons to kibana:
-    
+
     send_json_to_ELK("rootkit.json", "rootkit_scan_"+date)
     send_json_to_ELK("cves.json", "vuls_cves_scan_"+date)
     send_json_to_ELK("lynis.json", "vuls_cves_scan_"+date)
     # how to see then: in kibana -> settings -> index patterns -> create index pattern -> providing the names etc.
-    
+
     print("Took: ", datetime.datetime.now() - begin_time, " to execute.")  # about 2:30 minutes
 
 
@@ -272,4 +271,3 @@ For later:
 - The program will install the vuls, chkrootkit and lynis automatically. with sudo password provided
 - Check if the Jsons are valid and usable. I'm not sure but it will be a quick fix.
 """
-# edit: Connecting to Jira
