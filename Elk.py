@@ -208,7 +208,7 @@ def lynis(directory):
                 pass  # :)
 
 
-def send_json_to_kibana(file_name, index_name):
+def send_json_to_ELK(file_name, index_name):
     """
     file got to be in ndjson format
     """
@@ -255,9 +255,9 @@ def main():
 
     # well, sending the jsons to kibana:
     
-    send_json_to_kibana("rootkit.json", "rootkit_scan_"+date)
-    send_json_to_kibana("cves.json", "vuls_cves_scan_"+date)
-    send_json_to_kibana("lynis.json", "vuls_cves_scan_"+date)
+    send_json_to_ELK("rootkit.json", "rootkit_scan_"+date)
+    send_json_to_ELK("cves.json", "vuls_cves_scan_"+date)
+    send_json_to_ELK("lynis.json", "vuls_cves_scan_"+date)
     # how to see then: in kibana -> settings -> index patterns -> create index pattern -> providing the names etc.
     
     print("Took: ", datetime.datetime.now() - begin_time, " to execute.")  # about 2:30 minutes
