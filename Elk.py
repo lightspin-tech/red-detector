@@ -272,3 +272,4 @@ For later:
 - The program will install the vuls, chkrootkit and lynis automatically. with sudo password provided
 - Check if the Jsons are valid and usable. I'm not sure but it will be a quick fix.
 """
+# edit: Connecting to Jira
