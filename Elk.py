@@ -2,7 +2,9 @@ import subprocess  # probably for python 3 only.
 import json
 import datetime
 import threading
+import socket
 import os
+import urllib.request
 import re
 import sys
 from pprint import pprint
@@ -44,15 +46,20 @@ def vuls(vuls_root, sudo_password):
         vuls/vuls report \
         -format-list \
         -config=./config.toml # path to report.toml in docker'
-    sudo_password += sudo_password+ " command"
-    #  From what I understand, the line above is not supposed to work, but it is.
-    #  So I don't touch it for now :)
-    commands = ["cd /", "cd " + vuls_root, sudo_password,
-                vuls_report]  # gotta check on "clean" machine the scan. may need to add few more commands.
+    # sudo_password += sudo_password+ " command"
+
+    commands = ["cd /", "cd " + vuls_root, sudo_password+" " + vuls_scan]
     to_execute = ""  # the string that will run in the terminal at the end
     for i in commands:
         to_execute += i + ';'  # merging the commands into one line
-    output = subprocess.getoutput(to_execute)  # running the commands in the terminal and get the output.
+    output1 = subprocess.getoutput(to_execute)  # running the commands in the terminal and get the output.
+    # running the scan and then the report- in order to get just the report output.
+    commands = ["cd /", "cd " + vuls_root, sudo_password+" "+ vuls_report]
+    to_execute = ""
+    for i in commands:
+        to_execute += i + ';'
+    output = subprocess.getoutput(to_execute)
+
     # cleaning the data in order to get ndjson from the terminal output
     table = output.split("CVE-ID")[1]
     table = table.split("NVD")[1]
@@ -204,29 +211,33 @@ def lynis(directory, sudo_password):
                 pass  # :)
 
 
-def send_json_to_ELK(file_name, index_name):
+def send_json_to_ELK(file_name, index_name, hostname, ipaddr, type_of):
     """
     file got to be in ndjson format
     """
     try:
-        # Should include .json in file name.
-        MyFile = open(file_name, 'r').read()
-        ClearData = MyFile.splitlines(True)
+        with open(file_name) as fp:
+            for line in fp:
+                line = line.replace("\n", "")
+                # line = line.replace(" ", "")
+                line = line.strip()
+                line = line.replace("'", '"')
+                jdoc = {"hostname": hostname, "ipaddr": ipaddr, "type": type_of, "data": json.loads(line)}
+                es.index(index=index_name, doc_type='_doc', body=jdoc)
 
-        for line in ClearData:
-            line = line.replace("\n", "")
-            line = line.replace(" ", "")
-            line = line.replace("'", '"')
 
-            temp = json.loads(line)
-            es.index(index=index_name, doc_type='_doc', body=temp)
         print("finished upload: " + index_name)
     except Exception as e:
         print(e)
 
 
 def main():
-    sudo_pass = ''  # sudo password of the machine
+    # get IP:
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    # external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
+
+    sudo_pass = 'Idan2408'  # sudo password of the machine
     sudo_password = "echo " + sudo_pass + " | sudo -S "
 
     begin_time = datetime.datetime.now()
@@ -244,20 +255,22 @@ def main():
     t_rootkit.start()
     t_rootkit.join()
 
+    print ("finished rootkit")
     t_vuls = threading.Thread(target=vuls, args=(vuls_directory,sudo_password,))
     t_vuls.start()
     t_vuls.join()
-
+    print("finished vuls")
     t_lynis = threading.Thread(target=lynis,  args=(lynis_directory, sudo_password))
     t_lynis.start()
     t_lynis.join()
+    print("finished lynis")
+    # sending the jsons to elk:
 
-    # well, sending the jsons to kibana:
-
-    send_json_to_ELK("rootkit.json", "rootkit_scan_"+date)
-    send_json_to_ELK("cves.json", "vuls_cves_scan_"+date)
-    send_json_to_ELK("lynis.json", "vuls_cves_scan_"+date)
-    # how to see then: in kibana -> settings -> index patterns -> create index pattern -> providing the names etc.
+    # all of the uploadings take about 8 seconds:
+    send_json_to_ELK("rootkit.json", "rootkit_scan_"+date, hostname, local_ip, "rootkit")
+    send_json_to_ELK("cves.json", "vuls_cves_scan_"+date, hostname, local_ip, "vuls")
+    send_json_to_ELK("lynis.json", "lynis_scan_"+date, hostname, local_ip, "lynis")
+    # how to see: in kibana -> settings -> index patterns -> create index pattern -> providing the names etc.
 
     print("Took: ", datetime.datetime.now() - begin_time, " to execute.")  # about 2:30 minutes
 
@@ -270,4 +283,5 @@ For later:
 - need to check problems with file names- it can break the program. especially with the splits.
 - The program will install the vuls, chkrootkit and lynis automatically. with sudo password provided
 - Check if the Jsons are valid and usable. I'm not sure but it will be a quick fix.
+- doing the json.dumps for every line take a lot of time. I'll check it more.
 """
