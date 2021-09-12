@@ -255,15 +255,15 @@ def main():
     t_rootkit.start()
     t_rootkit.join()
 
-    print ("finished rootkit")
+    print ("finished save rootkit")
     t_vuls = threading.Thread(target=vuls, args=(vuls_directory,sudo_password,))
     t_vuls.start()
     t_vuls.join()
-    print("finished vuls")
+    print("finished save vuls")
     t_lynis = threading.Thread(target=lynis,  args=(lynis_directory, sudo_password))
     t_lynis.start()
     t_lynis.join()
-    print("finished lynis")
+    print("finished save lynis")
     # sending the jsons to elk:
 
     # all of the uploadings take about 8 seconds:
@@ -281,7 +281,4 @@ if __name__ == "__main__":
 """
 For later:
 - need to check problems with file names- it can break the program. especially with the splits.
-- The program will install the vuls, chkrootkit and lynis automatically. with sudo password provided
-- Check if the Jsons are valid and usable. I'm not sure but it will be a quick fix.
-- doing the json.dumps for every line take a lot of time. I'll check it more.
 """
