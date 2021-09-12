@@ -89,7 +89,7 @@ def vuls(vuls_root, sudo_password):
             }
             # write from here the data to the file and \n
             with open('cves.json', 'a') as outfile:
-                outfile.write(str(data) + "\n")
+                outfile.write(json.dumps(data) + "\n")
         index += 1
 
 
@@ -157,7 +157,7 @@ def chkrotkit(sudo_password):
                     data[i[0]] = j
 
         with open('rootkit.json', 'a') as outfile:
-            outfile.write(str(data) + "\n")
+            outfile.write(json.dumps(data) + "\n")
         data = {}
         index += 1
 
@@ -204,7 +204,7 @@ def lynis(directory, sudo_password):
                 data[line[0]] = line[1]
 
                 with open('lynis.json', 'a') as outfile:
-                    outfile.write(str(data) + "\n")
+                    outfile.write(json.dumps(data) + "\n")
                 data = {}
             except Exception as e:
                 # print e
@@ -221,7 +221,7 @@ def send_json_to_ELK(file_name, index_name, hostname, ipaddr, type_of):
                 line = line.replace("\n", "")
                 # line = line.replace(" ", "")
                 line = line.strip()
-                line = line.replace("'", '"')
+                #line = line.replace("'", '"')
                 jdoc = {"hostname": hostname, "ipaddr": ipaddr, "type": type_of, "data": json.loads(line)}
                 es.index(index=index_name, doc_type='_doc', body=jdoc)
 
