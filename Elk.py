@@ -44,7 +44,7 @@ def vuls(vuls_root, sudo_password):
         -v $PWD/vuls-log:/var/log/vuls \
         -v /etc/localtime:/etc/localtime:ro \
         vuls/vuls report \
-        -format-list \
+        -format-json \
         -config=./config.toml # path to report.toml in docker'
     # sudo_password += sudo_password+ " command"
 
@@ -55,11 +55,43 @@ def vuls(vuls_root, sudo_password):
     output1 = subprocess.getoutput(to_execute)  # running the commands in the terminal and get the output.
     # running the scan and then the report- in order to get just the report output.
     commands = ["cd /", "cd " + vuls_root, sudo_password+" "+ vuls_report]
-    to_execute = ""
+    to_execute=""
     for i in commands:
         to_execute += i + ';'
     output = subprocess.getoutput(to_execute)
+    #getting the data from the new json file:
+    directory = "/"+vuls_root+"/results"
+    output = subprocess.getoutput(sudo_password + " chmod -R 777 " + directory) # giving access
+    # we need the newest folder from the result folder:
+    subfolders = [f.path for f in os.scandir(directory) if f.is_dir()]
+    max = 0
+    max_file = ""
+    for i in subfolders:
+        # print (i)
+        temp = i
+        i = i.replace(directory, "")
+        i = i.replace("-", "")
+        i = i.replace("/", "")
+        i = i.replace(":", "")
+        i = i.replace("+", "")
+        i = i.replace("T", "")
+        # print (i)
+        if int(i) > int(max):
+            max = i
+            max_file = temp
+    json_file = max_file + "/c74.json"
+    with open(json_file, 'r') as outfile:
+        json_dict = json.loads(outfile.read())  # the json string
+    json_cves = json_dict["scannedCves"]
+    data = {}
+    with open('cves.json', 'w') as outfile:
+        outfile.write("")
+    for cve_name in json_cves:
+        data = json_cves[cve_name]
+        with open('cves.json', 'a') as outfile:
+            outfile.write(json.dumps(data) + "\n")
 
+    """
     # cleaning the data in order to get ndjson from the terminal output
     table = output.split("CVE-ID")[1]
     table = table.split("NVD")[1]
@@ -71,7 +103,7 @@ def vuls(vuls_root, sudo_password):
     with open('cves.json', 'w') as outfile:
         outfile.write("")
     for i in table:
-        """
+        
         IMPORTANT FOR LATER:
         if vuls is getting updated, the code here may not clean as well as now, or even break.  
         used this:
@@ -79,7 +111,7 @@ def vuls(vuls_root, sudo_password):
         CVSS = "" # 1 +8...
         FIXED = "" #5 +8 ...
         NVD = "" #6 +8... 
-        """
+        
         if index % 8 == 0 and "CVE" in table[index]:
             data = {
                 "Cve": table[index],
@@ -89,9 +121,9 @@ def vuls(vuls_root, sudo_password):
             }
             # write from here the data to the file and \n
             with open('cves.json', 'a') as outfile:
-                outfile.write(json.dumps(data) + "\n")
+                outfile.write(str(data) + "\n")
         index += 1
-
+    """
 
 def chkrotkit(sudo_password):
     second_commnd = "chkrootkit"
@@ -221,7 +253,6 @@ def send_json_to_ELK(file_name, index_name, hostname, ipaddr, type_of):
                 line = line.replace("\n", "")
                 # line = line.replace(" ", "")
                 line = line.strip()
-                #line = line.replace("'", '"')
                 jdoc = {"hostname": hostname, "ipaddr": ipaddr, "type": type_of, "data": json.loads(line)}
                 es.index(index=index_name, doc_type='_doc', body=jdoc)
 
@@ -255,15 +286,15 @@ def main():
     t_rootkit.start()
     t_rootkit.join()
 
-    print ("finished save rootkit")
+    print ("finished rootkit")
     t_vuls = threading.Thread(target=vuls, args=(vuls_directory,sudo_password,))
     t_vuls.start()
     t_vuls.join()
-    print("finished save vuls")
+    print("finished vuls")
     t_lynis = threading.Thread(target=lynis,  args=(lynis_directory, sudo_password))
     t_lynis.start()
     t_lynis.join()
-    print("finished save lynis")
+    print("finished lynis")
     # sending the jsons to elk:
 
     # all of the uploadings take about 8 seconds:
