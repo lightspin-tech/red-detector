@@ -448,8 +448,7 @@ def chkrotkit(sudo_password):
         for j in i:
 
             if anomaly in j or anomaly1 in j:
-                pass
-                # this is stupid but helped to organize (the first if statement is pretty useless codewise.
+                # pass ?
                 if anomaly in j:
                     # maybe calling a file or user this name will break the program.
                     j = j.split(anomaly)
