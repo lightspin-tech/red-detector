@@ -17,9 +17,8 @@ from pprint import pprint
 from elasticsearch import Elasticsearch
 import time
 
-es = Elasticsearch(
-    'localhost:9200'
-)
+es = Elasticsearch(['localhost:9200'], http_auth=('elastic', 'changeme'))
+
 
 
 def escape_ansi(line):
@@ -315,4 +314,3 @@ if __name__ == "__main__":
 For later:
 - need to check problems with file names- it can break the program. especially with the splits.
 """
-# runned this.
