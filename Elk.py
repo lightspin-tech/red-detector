@@ -66,7 +66,7 @@ def vuls(vuls_root, sudo_password,server_):
     output = subprocess.getoutput(to_execute)
     # getting the data from the new json file:
     directory = "/" + vuls_root + "/results"
-    output = subprocess.getoutput(sudo_password + " chmod -R 777 " + directory)  # giving access
+    output = subprocess.getoutput("sudo " + " chmod -R 777 " + directory)  # giving access
     # we need the newest folder from the result folder:
     subfolders = [f.path for f in os.scandir(directory) if f.is_dir()]
     max = 0
@@ -92,6 +92,7 @@ def vuls(vuls_root, sudo_password,server_):
     with open(json_file, 'r') as outfile:
         json_dict = json.loads(outfile.read())  # the json string
     json_cves = json_dict["scannedCves"]
+    
     data = {}
     with open('cves.json', 'w') as outfile:
         outfile.write("")
@@ -250,7 +251,7 @@ def main():
     local_ip = socket.gethostbyname(hostname)
     # external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
 
-    sudo_pass = 'Idan2408'  # sudo password of the machine
+    sudo_pass = ''  # sudo password of the machine
     sudo_password = "echo " + sudo_pass + " | sudo -S "
 
     begin_time = datetime.datetime.now()
@@ -314,3 +315,4 @@ if __name__ == "__main__":
 For later:
 - need to check problems with file names- it can break the program. especially with the splits.
 """
+# runned this.
