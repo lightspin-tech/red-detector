@@ -1,9 +1,3 @@
-"""
-
-Problems with vuls report, without changing the code. I'll fix this in the next days
-
-"""
-
 import subprocess  # probably for python 3 only.
 import json
 import datetime
