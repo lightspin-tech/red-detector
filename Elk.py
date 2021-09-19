@@ -289,14 +289,16 @@ def main():
 
     # probably not a good idea to upload this data to github,
     # so need to fill this bedore running:
-    ACCESS_KEY = ''
-    SECRET_KEY = ''
-    iam = boto3.resource('iam',
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_KEY,
-    )
-    account_id = iam.CurrentUser().arn.split(':')[4]
-
+    try:
+        ACCESS_KEY = ''
+        SECRET_KEY = ''
+        iam = boto3.resource('iam',
+            aws_access_key_id=ACCESS_KEY,
+            aws_secret_access_key=SECRET_KEY,
+        )
+        account_id = iam.CurrentUser().arn.split(':')[4]
+    except Exception as e:
+        account_id="failed to get account_id"
     # all of the uploadings take about 8 seconds:
     send_json_to_ELK("rootkit.json", "aws_rootkit_scan_3", instance_id, date, account_id, uuid_string ,"rootkit")
     send_json_to_ELK("cves.json", "aws_vuls_cves_scan_3", instance_id, date, account_id, uuid_string ,"vuls")
