@@ -79,18 +79,19 @@ def vuls(vuls_root, sudo_password):
         i = i.replace(":", "")
         i = i.replace("+", "")
         i = i.replace("T", "")
-        # print (i)
+        i = i.replace("Z", "")
         try:
             if int(i) > int(max):
                 max = i
                 max_file = temp
         except:
             max_file = temp
-    json_file = glob.glob(max_file + "/*")[0] # there is only one file in each folder.
+    json_file = glob.glob(max_file + "/*")[0]  # there is only one file in each folder.
 
     with open(json_file, 'r') as outfile:
         json_dict = json.loads(outfile.read())  # the json string
-    json_cves = json_dict["scannedCves"] # saving pretty big json file (about 20000 lines) and not really need all of it.
+        # loading into variable pretty big json file (about 20000 lines) and not really need all of it.
+    json_cves = json_dict["scannedCves"]
 
     data = {}
     with open('cves.json', 'w') as outfile:
@@ -120,7 +121,6 @@ def chkrotkit(sudo_password):
     text = text.split("\n")
     anomaly = "Searching for Ambients rootkit"
     anomaly1 = "Searching for suspicious files and dirs"
-    # got to check how it looks when the thing detecting something.
     data = {}
     index = 0
     mini_index = 1
@@ -130,7 +130,7 @@ def chkrotkit(sudo_password):
         outfile.write("")
     for i in text:
         if "  " not in i and "/" in i:
-            data = {"scnned file:" : i}
+            data = {"scnned file:": i}
             with open('rootkit.json', 'a') as outfile:
                 outfile.write(json.dumps(data) + "\n")
             data = {}
@@ -177,6 +177,13 @@ def chkrotkit(sudo_password):
 
 def lynis(directory, sudo_password):
     to_execute = ""
+    """
+    if cloned from their github:
+    run it from the lynis dir: 
+    sudo ./lynis audit system
+    
+    The git version gives a bit more output, I have a comparison in my mail.
+    """
     commands = ["cd /", sudo_password + " lynis audit system"]
     for i in commands:
         to_execute += i + ';'
@@ -185,10 +192,10 @@ def lynis(directory, sudo_password):
     title = ""
     text = output_lynis
 
-    escaped_line = escape_ansi(text)  # cleaning output from ANSI stuff. wasted a few hours here :(
+    escaped_line = escape_ansi(text)  # cleaning output from ANSI stuff.
 
     text = escaped_line
-    text = text.split("Boot and services")  # need to look on original output to understand.
+    text = text.split("Boot and services")  # first title, don't need the things before it.
     #  cleaning text and prepare to json-ing:
     text = text[1]
     text = text.replace("'", "")
@@ -205,11 +212,7 @@ def lynis(directory, sudo_password):
             title = line
         elif line != "":
             try:
-                # print line
                 line = line.split("[")
-                # line = line.split(":")
-                # line = line.split("...")
-                # print line
                 data["title"] = title.replace("[+]", "")
                 line[1] = line[1].replace("]", "")
                 data[line[0]] = line[1]
@@ -218,8 +221,7 @@ def lynis(directory, sudo_password):
                     outfile.write(json.dumps(data) + "\n")
                 data = {}
             except Exception as e:
-                # print e
-                pass  # :)
+                print(e)
 
 
 def send_json_to_ELK(file_name, index_name, instance_id, time, account_id, session_id, type_of, es):
@@ -238,6 +240,7 @@ def send_json_to_ELK(file_name, index_name, instance_id, time, account_id, sessi
                             "session_id": session_id,
                             "type_of_scan": type_of, "data": json.loads(line)}
                 else:
+                    # lynis:
                     # need to break the title thing:
                     json_line = json.loads(line)
                     title = json_line["title"]
@@ -265,10 +268,10 @@ def main():
         elastic = Elasticsearch([link])
     print("")
     print("running ...")
+
     # get IP:
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
-    # external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
 
     sudo_pass = ''  # sudo password of the machine
     sudo_password = "echo " + sudo_pass + " | sudo -S "
@@ -313,13 +316,13 @@ def main():
     except Exception as e:
         account_id = "failed to get account_id"
     # all of the uploading take about 8 seconds:
-    send_json_to_ELK("rootkit.json", "aws_rootkit_scan_7", instance_id, date, account_id, uuid_string, "rootkit",
-                     elastic)
-    send_json_to_ELK("cves.json", "aws_vuls_cves_scan_7", instance_id, date, account_id, uuid_string, "vuls", elastic)
-    send_json_to_ELK("lynis.json", "aws_lynis_scan_7", instance_id, date, account_id, uuid_string, "lynis", elastic)
+    send_json_to_ELK("rootkit.json", "aws_rootkit_scan_", instance_id, date, account_id, uuid_string, "rootkit",elastic)
+    send_json_to_ELK("cves.json", "aws_vuls_cves_scan_", instance_id, date, account_id, uuid_string, "vuls", elastic)
+    send_json_to_ELK("lynis.json", "aws_lynis_scan_", instance_id, date, account_id, uuid_string, "lynis", elastic)
     # how to see: in kibana -> settings -> index patterns -> create index pattern -> providing the names etc.
 
-    print("Took: ", datetime.datetime.now() - begin_time, " to execute.")  # about 2:30 minutes. less on ec2- about 1:30
+    print("Took: ", datetime.datetime.now() - begin_time, " to execute.")
+    # locally about 2:30 minutes. less on ec2- about 1:30
 
 
 if __name__ == "__main__":
@@ -328,8 +331,8 @@ if __name__ == "__main__":
 """
 mini tutorial before running:
 - install Vuls with docker from: https://vuls.io/docs/en/tutorial-docker.html
-- install chkrootkit (can install with "apt-get install chkrootkit" command in ubuntu's terminal)
-- install lynis: git clone from : https://github.com/CISOfy/lynis
+- install chkrootkit: apt-get install chkrootkit
+- install lynis: apt-get install lynis
 
 - Helping with setting auth to ELK: https://github.com/deviantony/docker-elk
 
