@@ -221,7 +221,8 @@ def lynis(directory, sudo_password):
                     outfile.write(json.dumps(data) + "\n")
                 data = {}
             except Exception as e:
-                print(e)
+                # print(e)
+                pass
 
 
 def send_json_to_ELK(file_name, index_name, instance_id, time, account_id, session_id, type_of, es):
@@ -279,7 +280,7 @@ def main():
     begin_time = datetime.datetime.now()
 
     vuls_directory = "home/ubuntu/idannos"
-    lynis_directory = "home/idan/lynis"  # don't really use it the function
+    lynis_directory = "home/ubuntu/lynis"  # don't really use it the function, explanation there.
 
     chkrotkit(sudo_password)
     print("finished rootkit")
@@ -303,8 +304,8 @@ def main():
     temp = str(date_and_hour).split(" ")
     date = temp[0]  # getting the date only without hours
 
-    # probably not a good idea to upload this data to github,
-    # so need to fill this before running:
+
+    # need to fill this before running:
     try:
         ACCESS_KEY = ''
         SECRET_KEY = ''
