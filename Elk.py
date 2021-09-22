@@ -1,12 +1,12 @@
-import subprocess  # probably for python 3 only.
+import subprocess
 import json
 import datetime
-import threading
 import socket
 import os
 import urllib.request
 import re
 import sys
+import glob
 from requests import get
 import requests
 import boto3
@@ -16,15 +16,14 @@ import datetime
 from pprint import pprint
 from elasticsearch import Elasticsearch
 import time
-
-es = Elasticsearch(['localhost:9200'], http_auth=('elastic', 'changeme'))
-
+from art import *
 
 
 def escape_ansi(line):
     """
     when running lynis, the output in the terminal is colored.
-    when getting the data in python, there is a lot of unwanted  ANSI stuff that this function removes.
+    when getting the data in python, there is a lot of unwanted  ANSI stuff (from the coloring)
+    that this function removes.
     :param line: getting the "ruined" text
     :return: the "correct" text
     """
@@ -32,7 +31,7 @@ def escape_ansi(line):
     return ansi_escape.sub('', line)
 
 
-def vuls(vuls_root, sudo_password,server_):
+def vuls(vuls_root, sudo_password):
     data = {}
     vuls_scan = 'sudo docker run --rm \
         -v ~/.ssh:/root/.ssh:ro \
@@ -53,13 +52,13 @@ def vuls(vuls_root, sudo_password,server_):
         -config=./config.toml # path to report.toml in docker'
     # sudo_password += sudo_password+ " command"
 
-    commands = ["cd /", "cd " + vuls_root, vuls_scan]
+    commands = ["cd /", "cd " + vuls_root, sudo_password + vuls_scan]
     to_execute = ""  # the string that will run in the terminal at the end
     for i in commands:
         to_execute += i + ';'  # merging the commands into one line
     output1 = subprocess.getoutput(to_execute)  # running the commands in the terminal and get the output.
     # running the scan and then the report- in order to get just the report output.
-    commands = ["cd /", "cd " + vuls_root,  vuls_report]
+    commands = ["cd /", "cd " + vuls_root, sudo_password + vuls_report]
     to_execute = ""
     for i in commands:
         to_execute += i + ';'
@@ -87,12 +86,12 @@ def vuls(vuls_root, sudo_password,server_):
                 max_file = temp
         except:
             max_file = temp
+    json_file = glob.glob(max_file + "/*")[0] # there is only one file in each folder.
 
-    json_file = max_file + "/"+server_+".json"
     with open(json_file, 'r') as outfile:
         json_dict = json.loads(outfile.read())  # the json string
-    json_cves = json_dict["scannedCves"]
-    
+    json_cves = json_dict["scannedCves"] # saving pretty big json file (about 20000 lines) and not really need all of it.
+
     data = {}
     with open('cves.json', 'w') as outfile:
         outfile.write("")
@@ -103,7 +102,7 @@ def vuls(vuls_root, sudo_password,server_):
 
 
 def chkrotkit(sudo_password):
-    second_commnd = "sudo chkrootkit"
+    second_commnd = sudo_password +" chkrootkit"
     commands = ["cd /", second_commnd]
     to_execute = ""  # the string that will run in the terminal at the end
     for i in commands:
@@ -130,49 +129,55 @@ def chkrotkit(sudo_password):
     with open('rootkit.json', 'w') as outfile:
         outfile.write("")
     for i in text:
-        i = i.split("  ")
-        # i eg: ['basename', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'not infected']
-        for j in i:
+        if "  " not in i and "/" in i:
+            data = {"scnned file:" : i}
+            with open('rootkit.json', 'a') as outfile:
+                outfile.write(json.dumps(data) + "\n")
+            data = {}
+        else:
+            i = i.split("  ")
+            # i eg: ['basename', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'not infected']
+            for j in i:
+                if anomaly in j or anomaly1 in j:
+                    # pass ?
+                    if anomaly in j:
+                        # maybe calling a file or user this name will break the program.
+                        j = j.split(anomaly)
+                        data[anomaly] = j
+                    else:
+                        for k in text:
+                            if "Searching" not in text[index + mini_index]:
+                                temp = temp + text[index + mini_index] + ", "
+                                text[index + mini_index] = ""
+                                mini_index += 1
+                                # print "here"
 
-            if anomaly in j or anomaly1 in j:
-                # pass ?
-                if anomaly in j:
-                    # maybe calling a file or user this name will break the program.
-                    j = j.split(anomaly)
-                    data[anomaly] = j
-                else:
-                    for k in text:
-                        if "Searching" not in text[index + mini_index]:
-                            temp = temp + text[index + mini_index] + ", "
-                            text[index + mini_index] = ""
-                            mini_index += 1
-                            # print "here"
+                            else:
+                                break
+                        data[anomaly1] = temp
 
-                        else:
-                            break
-                    data[anomaly1] = temp
+                elif j != "" and j != i[0]:
+                    if "infected" in j or "found" in j:
+                        data[j] = i[0]
+                        # print (data)
+                        """
+                        # to get rootkit as terminal:
+                        data[i[0]] = j
+                        # without the else below.
+                        """
+                    else:
+                        data[i[0]] = j
 
-            elif j != "" and j != i[0]:
-                if "infected" in j or "found" in j:
-                    data[j] = i[0]
-                    # print (data)
-                    """
-                    # to get rootkit as terminal:
-                    data[i[0]] = j
-                    # without the else below.
-                    """
-                else:
-                    data[i[0]] = j
-
-        with open('rootkit.json', 'a') as outfile:
-            outfile.write(json.dumps(data) + "\n")
-        data = {}
-        index += 1
+            with open('rootkit.json', 'a') as outfile:
+                if data != {}:
+                    outfile.write(json.dumps(data) + "\n")
+            data = {}
+            index += 1
 
 
 def lynis(directory, sudo_password):
     to_execute = ""
-    commands = ["cd /",  "sudo lynis audit system"]
+    commands = ["cd /", sudo_password + " lynis audit system"]
     for i in commands:
         to_execute += i + ';'
 
@@ -217,7 +222,7 @@ def lynis(directory, sudo_password):
                 pass  # :)
 
 
-def send_json_to_ELK(file_name, index_name,instance_id, time, account_id, session_id, type_of):
+def send_json_to_ELK(file_name, index_name, instance_id, time, account_id, session_id, type_of, es):
     """
     file got to be in ndjson format
     """
@@ -227,17 +232,19 @@ def send_json_to_ELK(file_name, index_name,instance_id, time, account_id, sessio
                 line = line.replace("\n", "")
                 # line = line.replace(" ", "")
                 line = line.strip()
-                #jdoc = {"hostname": hostname, "ipaddr": ipaddr, "type": type_of, "data": json.loads(line)}
-                if type_of!="lynis":
-                    jdoc = {"instance_id": instance_id, "time": time, "account_id": account_id, "session_id": session_id,
+                # jdoc = {"hostname": hostname, "ipaddr": ipaddr, "type": type_of, "data": json.loads(line)}
+                if type_of != "lynis":
+                    jdoc = {"instance_id": instance_id, "time": time, "account_id": account_id,
+                            "session_id": session_id,
                             "type_of_scan": type_of, "data": json.loads(line)}
                 else:
                     # need to break the title thing:
                     json_line = json.loads(line)
                     title = json_line["title"]
                     json_line.pop("title")
-                    jdoc = {"instance_id": instance_id, "time": time, "account_id": account_id, "session_id": session_id,
-                            "type_of_scan": type_of, "title": title, title: json_line} # about "title":title
+                    jdoc = {"instance_id": instance_id, "time": time, "account_id": account_id,
+                            "session_id": session_id,
+                            "type_of_scan": type_of, "title": title, title: json_line}  # about "title":title
                 es.index(index=index_name, doc_type='_doc', body=jdoc)
 
         print("finished upload: " + index_name)
@@ -246,6 +253,18 @@ def send_json_to_ELK(file_name, index_name,instance_id, time, account_id, sessio
 
 
 def main():
+    tprint("ELK    EC2    SCAN")
+    link = input("insert your Elk URL (e.g: localhost:9200) : ")
+    username = input("insert your Elk username for auth(if there is no auth, click ENTER): ")
+    # (?) need to get the directories too (vuls and lynis), sudo password
+
+    if username != "":
+        password = input("insert your Elk password for auth: ")
+        elastic = Elasticsearch([link], http_auth=(username, password))
+    else:
+        elastic = Elasticsearch([link])
+    print("")
+    print("running ...")
     # get IP:
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
@@ -260,11 +279,11 @@ def main():
     lynis_directory = "home/idan/lynis"  # don't really use it the function
 
     chkrotkit(sudo_password)
-
     print("finished rootkit")
-    host_in_config = "host"  # server.host_in_config
-    vuls(vuls_directory, sudo_password, host_in_config)
+
+    vuls(vuls_directory, sudo_password)
     print("finished vuls")
+
     lynis(lynis_directory, sudo_password)
     print("finished lynis")
 
@@ -281,38 +300,45 @@ def main():
     temp = str(date_and_hour).split(" ")
     date = temp[0]  # getting the date only without hours
 
-    # account id:
-    # from what I understood, getting the Account ID requires AWS_ACCESS_KEY_ID and an AWS_SECRET_KEY,
-    # which is not reachable from just a python script(?). that means that the user will need to insert them manually?.
-    # I don't know what the final plan- how will the user run it etc.
-    # code for that from SO:
-
     # probably not a good idea to upload this data to github,
-    # so need to fill this bedore running:
+    # so need to fill this before running:
     try:
         ACCESS_KEY = ''
         SECRET_KEY = ''
         iam = boto3.resource('iam',
-            aws_access_key_id=ACCESS_KEY,
-            aws_secret_access_key=SECRET_KEY,
-        )
+                             aws_access_key_id=ACCESS_KEY,
+                             aws_secret_access_key=SECRET_KEY,
+                             )
         account_id = iam.CurrentUser().arn.split(':')[4]
     except Exception as e:
-        account_id="failed to get account_id"
-    # all of the uploadings take about 8 seconds:
-    send_json_to_ELK("rootkit.json", "aws_rootkit_scan_3", instance_id, date, account_id, uuid_string ,"rootkit")
-    send_json_to_ELK("cves.json", "aws_vuls_cves_scan_3", instance_id, date, account_id, uuid_string ,"vuls")
-    send_json_to_ELK("lynis.json", "aws_lynis_scan_3", instance_id, date, account_id, uuid_string ,"lynis")
+        account_id = "failed to get account_id"
+    # all of the uploading take about 8 seconds:
+    send_json_to_ELK("rootkit.json", "aws_rootkit_scan_7", instance_id, date, account_id, uuid_string, "rootkit",
+                     elastic)
+    send_json_to_ELK("cves.json", "aws_vuls_cves_scan_7", instance_id, date, account_id, uuid_string, "vuls", elastic)
+    send_json_to_ELK("lynis.json", "aws_lynis_scan_7", instance_id, date, account_id, uuid_string, "lynis", elastic)
     # how to see: in kibana -> settings -> index patterns -> create index pattern -> providing the names etc.
 
-    print("Took: ", datetime.datetime.now() - begin_time, " to execute.")  # about 2:30 minutes
+    print("Took: ", datetime.datetime.now() - begin_time, " to execute.")  # about 2:30 minutes. less on ec2- about 1:30
 
 
 if __name__ == "__main__":
     main()
 
 """
-For later:
-- need to check problems with file names- it can break the program. especially with the splits.
+mini tutorial before running:
+- install Vuls with docker from: https://vuls.io/docs/en/tutorial-docker.html
+- install chkrootkit (can install with "apt-get install chkrootkit" command in ubuntu's terminal)
+- install lynis: git clone from : https://github.com/CISOfy/lynis
+
+- Helping with setting auth to ELK: https://github.com/deviantony/docker-elk
+
+pip3 install:
+boto3
+art
+ec2_metadata
+elasticsearch
+requests
+datetime
+re
 """
-# runned this.
