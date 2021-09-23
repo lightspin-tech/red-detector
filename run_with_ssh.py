@@ -3,7 +3,7 @@ import paramiko
 
 ec2_global_ip = ''
 username = "ubuntu"
-# transfering the file to the ec2:
+# transferring the file to the ec2:
 ssh = paramiko.SSHClient()
 privet_key = paramiko.RSAKey.from_private_key_file("/home/idan/idan-r.pem")
 ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", "known_hosts")))
