@@ -37,11 +37,12 @@ if __name__ == "__main__":
 
     volume_id, selected_az, snapshot_id = snapper.snapshot2volume(volume_id=source_volume_id)
 
-    scanner = Scanner(logger=logger, region=snapper.region)
     if cmd_args.keypair:
-        scanner.keypair_name = cmd_args.keypair
+        scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=cmd_args.keypair)
     else:
+        scanner = Scanner(logger=logger, region=snapper.region, key_pair_name="red_detector_key")
         scanner.keypair_name = scanner.create_keypair(key_name='red_detector_key')
+
     ec2_instance_id, ec2_instance_public_ip, report_service_port = scanner.create_ec2(selected_az=selected_az)
     scanner.attach_volume_to_ec2(ec2_instance_id=ec2_instance_id, volume_id=volume_id)
     scanner.scan_and_report(ec2_instance_public_ip=ec2_instance_public_ip,

@@ -12,9 +12,10 @@ from src import remote_scripts
 
 
 class Scanner:
-    def __init__(self, logger, region):
+    def __init__(self, logger, region, key_pair_name="red_detector_key"):
         self.logger = logger
         self.region = region
+        self.key_pair_name = key_pair_name
         self.client = boto3.client('ec2', region_name=region)
         self.ec2 = boto3.resource('ec2', region_name=region)
         self.keypair_name = None
@@ -31,7 +32,7 @@ class Scanner:
             self.logger.error(f"create key pair: {err}")
             exit(99)
         self.logger.info(f'creating key pair: "red_detector_key"')
-        with open('red_detector_key.pem', 'w') as f:
+        with open('red_detector_key.pem', 'w') as f:  # NEED TO OPEN A LOCAL FILE FOR "OLD" KEY PAIR TOO.
             f.write(new_keypair.key_material)
         return key_name
 
@@ -137,7 +138,7 @@ class Scanner:
                 MinCount=1,
                 MaxCount=1,
                 InstanceType='t2.large',
-                KeyName=self.keypair_name,
+                KeyName=self.key_pair_name,
                 UserData=user_data,
                 SecurityGroupIds=[
                     security_group_id,
@@ -208,7 +209,8 @@ class Scanner:
     def scan_and_report(self, ec2_instance_public_ip, report_service_port, ec2_instance_id, snapshot_id):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        privet_key = paramiko.RSAKey.from_private_key_file("red_detector_key.pem")
+        privet_key = paramiko.RSAKey.from_private_key_file(self.key_pair_name)  # the error came from here: assuming key
+        # pair didn't inserted?
         connect = 0
         while not connect:
             try:
