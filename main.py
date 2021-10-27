@@ -49,5 +49,3 @@ if __name__ == "__main__":
                             report_service_port=report_service_port, ec2_instance_id=ec2_instance_id,
                             snapshot_id=snapshot_id)
 
-# running in terminal with:
-# python3 main.py --region us-east-2 --instance-id i-0a70851a2af9eec29 --keypair idan15 --log-level INFO
