@@ -1,6 +1,6 @@
 import argparse
 from art import text2art
-
+import random
 from src.logger import setup_logger
 from src.snapper import Snapper
 from src.scanner import Scanner
@@ -40,12 +40,13 @@ if __name__ == "__main__":
     if cmd_args.keypair:
         scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=cmd_args.keypair)
     else:
-        scanner = Scanner(logger=logger, region=snapper.region, key_pair_name="red_detector_key")
-        scanner.keypair_name = scanner.create_keypair(key_name='red_detector_key')
+        rand = str(random.randrange(10000))  # need to give a not taken name when creating new key pair.
+        key_name = "red_detector_key{random_number}".format(random_number=rand)
+        scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=key_name)
+        scanner.keypair_name = scanner.create_keypair(key_name=key_name)
 
     ec2_instance_id, ec2_instance_public_ip, report_service_port = scanner.create_ec2(selected_az=selected_az)
     scanner.attach_volume_to_ec2(ec2_instance_id=ec2_instance_id, volume_id=volume_id)
     scanner.scan_and_report(ec2_instance_public_ip=ec2_instance_public_ip,
                             report_service_port=report_service_port, ec2_instance_id=ec2_instance_id,
                             snapshot_id=snapshot_id)
-

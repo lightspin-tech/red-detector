@@ -12,7 +12,7 @@ from src import remote_scripts
 
 
 class Scanner:
-    def __init__(self, logger, region, key_pair_name="red_detector_key"):
+    def __init__(self, logger, region, key_pair_name):
         self.logger = logger
         self.region = region
         self.key_pair_name = key_pair_name
@@ -20,19 +20,19 @@ class Scanner:
         self.ec2 = boto3.resource('ec2', region_name=region)
         self.keypair_name = None
 
-    def create_keypair(self, key_name='red_detector_key'):
+    def create_keypair(self, key_name):
         try:
             new_keypair = self.ec2.create_key_pair(KeyName=key_name)
         except ClientError as err:
             if err.response["Error"]["Code"] == "InvalidKeyPair.Duplicate":
                 self.logger.warning(f"key pair: {key_name} already exists.")
-                val = input("use the existing keypair?[Y/N]\n")
+                val = input("use the existing keypair?[Y/N] (if using the same keypair- you need to provide it as local pem file in the folder.)\n")
                 if val.lower() == "y":
                     return key_name
             self.logger.error(f"create key pair: {err}")
             exit(99)
-        self.logger.info(f'creating key pair: "red_detector_key"')
-        with open('red_detector_key.pem', 'w') as f:  # NEED TO OPEN A LOCAL FILE FOR "OLD" KEY PAIR TOO.
+        self.logger.info('creating key pair: {red_detector_key}'.format(red_detector_key=self.key_pair_name))
+        with open(self.key_pair_name+'.pem', 'w') as f:  # NEED TO OPEN A LOCAL FILE FOR "OLD" KEY PAIR TOO.
             f.write(new_keypair.key_material)
         return key_name
 
