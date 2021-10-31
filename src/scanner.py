@@ -210,7 +210,6 @@ class Scanner:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         privet_key = paramiko.RSAKey.from_private_key_file(self.key_pair_name+".pem")
-        # the error came from the line above: assuming key pair didn't inserted?
         connect = 0
         while not connect:
             try:
