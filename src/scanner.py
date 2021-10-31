@@ -26,7 +26,7 @@ class Scanner:
         except ClientError as err:
             if err.response["Error"]["Code"] == "InvalidKeyPair.Duplicate":
                 self.logger.warning(f"key pair: {key_name} already exists.")
-                val = input("use the existing keypair?[Y/N] (if using the same keypair- you need to provide it as local pem file in the folder.)\n")
+                val = input("use the existing keypair?[Y/N] \n")
                 if val.lower() == "y":
                     return key_name
             self.logger.error(f"create key pair: {err}")

@@ -40,7 +40,7 @@ if __name__ == "__main__":
     if cmd_args.keypair:
         scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=cmd_args.keypair)
     else:
-        rand = str(random.randrange(10000))  # need to give a not taken name when creating new key pair.
+        rand = str(random.randrange(10000))  # need to give an unused name when creating new key pair.
         key_name = "red_detector_key{random_number}".format(random_number=rand)
         scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=key_name)
         scanner.keypair_name = scanner.create_keypair(key_name=key_name)
