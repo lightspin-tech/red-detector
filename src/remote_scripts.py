@@ -1,5 +1,5 @@
 script_a = '''#!/bin/bash -ex
-touch /home/ubuntu/got_here1.txt
+
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 apt-get update
@@ -13,7 +13,7 @@ mkdir -p chkrootkit && cd chkrootkit
 tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
 make sense
 
-touch /home/ubuntu/got_here15.txt
+
 
 cd /home/ubuntu/vuls
 docker pull vuls/go-cve-dictionary
@@ -23,7 +23,7 @@ docker pull vuls/go-exploitdb
 docker pull vuls/gost
 docker pull vuls/vuls
 
-touch /home/ubuntu/got_here2.txt
+
 
 PWD=/home/ubuntu/vuls/
 
@@ -32,7 +32,7 @@ docker run --rm -i \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
     vuls/go-cve-dictionary fetch nvd
 
-touch /home/ubuntu/got_here25.txt
+
 
 docker run --rm -i \
     -v $PWD:/vuls \
@@ -76,7 +76,7 @@ docker run --rm -i \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
     
-touch /home/ubuntu/got_here27.txt
+
 touch config_scan.toml
 
 cat > config_scan.toml <<EOF
