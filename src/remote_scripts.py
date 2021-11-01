@@ -13,6 +13,8 @@ mkdir -p chkrootkit && cd chkrootkit
 tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
 make sense
 
+touch /home/ubuntu/got_here15.txt
+
 cd /home/ubuntu/vuls
 docker pull vuls/go-cve-dictionary
 docker pull vuls/goval-dictionary
@@ -21,56 +23,48 @@ docker pull vuls/go-exploitdb
 docker pull vuls/gost
 docker pull vuls/vuls
 
+touch /home/ubuntu/got_here2.txt
+
 PWD=/home/ubuntu/vuls/
-docker run --rm -it \
-    -v $PWD:/go-cve-dictionary \
-    -v $PWD/go-cve-dictionary-log:/var/log/go-cve-dictionary \
+
+docker run --rm -i \
+    -v $PWD:/vuls \
+    -v $PWD/go-cve-dictionary-log:/var/log/vuls \
     vuls/go-cve-dictionary fetch nvd
 
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-redhat 5 6 7 8
+touch /home/ubuntu/got_here25.txt
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-debian 7 8 9 10
+    vuls/goval-dictionary fetch redhat 5 6 7 8
+
+docker run --rm -i \
+    -v $PWD:/vuls \
+    -v $PWD/goval-dictionary-log:/var/log/vuls \
+    vuls/goval-dictionary fetch debian 7 8 9 10
     
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
+    vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-ubuntu 14 16 18 19 20
+    vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
+
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -opensuse 13.2
+    vuls/goval-dictionary fetch oracle 
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -suse-enterprise-server 12  
+    vuls/goval-dictionary fetch amazon  
 
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-oracle 
-
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-amazon  
-
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/gost-log:/var/log/gost \
-    vuls/gost fetch redhat
 
 docker run --rm -i \
     -v $PWD:/vuls \
@@ -82,6 +76,9 @@ docker run --rm -i \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
     
+touch /home/ubuntu/got_here27.txt
+touch config_scan.toml
+
 cat > config_scan.toml <<EOF
 [servers]
 [servers.host]
@@ -114,7 +111,7 @@ SQLite3Path = "/vuls/go-exploitdb.sqlite3"
 type = "sqlite3"
 SQLite3Path = "/vuls/go-msfdb.sqlite3"
 EOF
-touch /home/ubuntu/got_here2.txt
+touch /home/ubuntu/got_here3.txt
 touch /tmp/userData.finished
 '''
 
