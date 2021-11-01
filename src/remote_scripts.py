@@ -1,4 +1,5 @@
 script_a = '''#!/bin/bash -ex
+touch /home/ubuntu/got_here1.txt
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 apt-get update
@@ -21,12 +22,10 @@ docker pull vuls/gost
 docker pull vuls/vuls
 
 PWD=/home/ubuntu/vuls/
-for i in `seq 2002 $(date +"%Y")`; do \
-    docker run --rm -i\
-    -v $PWD:/vuls \
-    -v $PWD/go-cve-dictionary-log:/var/log/vuls \
-    vuls/go-cve-dictionary fetchnvd -years $i; \
-  done
+docker run --rm -it \
+    -v $PWD:/go-cve-dictionary \
+    -v $PWD/go-cve-dictionary-log:/var/log/go-cve-dictionary \
+    vuls/go-cve-dictionary fetch nvd
 
 docker run --rm -i \
     -v $PWD:/vuls \
@@ -86,7 +85,7 @@ docker run --rm -i \
 cat > config_scan.toml <<EOF
 [servers]
 [servers.host]
-host        = "172.17.0.1"
+host        = "172.18.0.1"
 port        = "2222"
 user        = "root"
 sshConfigPath = "/root/.ssh/config"
@@ -115,7 +114,7 @@ SQLite3Path = "/vuls/go-exploitdb.sqlite3"
 type = "sqlite3"
 SQLite3Path = "/vuls/go-msfdb.sqlite3"
 EOF
-
+touch /home/ubuntu/got_here2.txt
 touch /tmp/userData.finished
 '''
 
@@ -153,7 +152,7 @@ server {{
     #charset koi8-r;
     #access_log  /var/log/nginx/host.access.log  main;
     location /vuls/ {{
-	proxy_pass http://172.17.0.1:8000/;
+	proxy_pass http://172.18.0.1:8000/;
     }}
     location / {{
         root   /usr/share/nginx/html;
