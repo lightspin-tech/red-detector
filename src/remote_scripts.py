@@ -24,9 +24,7 @@ docker pull vuls/gost
 docker pull vuls/vuls
 
 
-
-PWD=/home/ubuntu/vuls/
-
+cd /home/ubuntu/vuls/
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
@@ -77,12 +75,13 @@ docker run --rm -i \
     vuls/go-msfdb fetch msfdb
     
 
+
 touch config_scan.toml
 
 cat > config_scan.toml <<EOF
 [servers]
 [servers.host]
-host        = "172.18.0.1"
+host        = "172.17.0.1"
 port        = "2222"
 user        = "root"
 sshConfigPath = "/root/.ssh/config"
@@ -111,15 +110,17 @@ SQLite3Path = "/vuls/go-exploitdb.sqlite3"
 type = "sqlite3"
 SQLite3Path = "/vuls/go-msfdb.sqlite3"
 EOF
-touch /home/ubuntu/got_here3.txt
 touch /tmp/userData.finished
 '''
 
 script_b = '''
 set -ex
 
+touch /home/ubuntu/startB.txt
+
 sudo mkdir -p /vol/
 sudo mount {mount_point} /vol/
+
 
 FILE="/vol/usr/sbin/sshd"
 if [ -f "$FILE" ]; then
@@ -131,13 +132,14 @@ sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
 sudo chown root:root /vol/root/.ssh/tmp_authorized_keys 
 sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
 
+
 sudo mount -t proc none /vol/proc
 sudo mount -o bind /dev /vol/dev
 sudo mount -o bind /sys /vol/sys
 sudo mount -o bind /run /vol/run
 
-sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
 
+sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
 # Reporting
 mkdir -p /home/ubuntu/nginx/html
 cat > /home/ubuntu/nginx/default.conf <<EOF
@@ -155,7 +157,7 @@ server {{
         root   /usr/share/nginx/html;
         index  index.html index.htm;
     }}
-  
+
     #error_page  404              /404.html;
 
     # redirect server error pages to the static page /50x.html
@@ -244,30 +246,48 @@ cat > /home/ubuntu/nginx/html/index.html <<EOF
 </body>
 </html>
 EOF
+
+
 sudo docker run --name docker-nginx -p {port}:80 -d -v /home/ubuntu/nginx/html:/usr/share/nginx/html -v /home/ubuntu/nginx/default.conf:/etc/nginx/conf.d/default.conf nginx
 
-# Lynis audit
-sudo cp /home/ubuntu/lynis-3.0.3.tar.gz /vol/root/
-sudo su -c "chroot /vol tar xvf /root/lynis-3.0.3.tar.gz -C /root/"
-sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/root/lynis/run.sh && chmod +x /vol/root/lynis/run.sh"
-sudo su -c "chroot /vol /root/lynis/run.sh" | ansi2html -l > /home/ubuntu/nginx/html/lynis_report.html
 
+# Lynis audit
+touch /home/ubuntu/bStartingLynis.txt
+ 
+
+sudo cp /home/ubuntu/lynis-3.0.3.tar.gz /vol/root/
+
+
+sudo su -c "chroot /vol tar xvf /root/lynis-3.0.3.tar.gz -C /root/"
+
+
+sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/root/lynis/run.sh && chmod +x /vol/root/lynis/run.sh"
+
+
+sudo su -c "chroot /vol lynis audit system" | ansi2html > /home/ubuntu/nginx/html/lynis_report.html
+
+
+touch /home/ubuntu/bEndedLynis.txt
 # Chkrootkit scan
 cd /home/ubuntu/chkrootkit
 # sudo ./chkrootkit -r /vol | sed -n '/INFECTED/,/Searching/p' | head -n -1 | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 
+
 # Vuls scan
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
 
-echo "Creating ssh config"
+touch /home/ubuntu/b1 .txt
+
 sudo cat > ~/.ssh/config <<EOF
 Host *
     StrictHostKeyChecking no
 EOF
 
+
 PWD=/home/ubuntu/vuls/
 cd /home/ubuntu/vuls
+
 
 echo "Scanning..."
 sudo docker run --rm -i \
@@ -293,9 +313,12 @@ sudo docker run --rm -i \
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
 fi
+
+touch /home/ubuntu/endofB.txt
 '''
 
 script_c = '''
+touch /home/ubuntu/startC.txt
 set -ex
 echo "Starting report webUI..."
 
@@ -307,4 +330,5 @@ sudo docker run -dt --name vuls-report-srv-{instance_id} \
     ishidaco/vulsrepo
 
 echo "Check the report at: http://{ip_address}:{port}"
+touch /home/ubuntu/endofC.txt
 '''
