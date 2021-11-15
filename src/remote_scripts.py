@@ -295,7 +295,7 @@ cd /home/ubuntu/vuls
 
 sudo apt-get install debian-goodies -y
 
-touch /home/ubuntu/b25 .txt
+touch /home/ubuntu/b2-5 .txt
 
 
 
