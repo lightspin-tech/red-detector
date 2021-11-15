@@ -293,8 +293,9 @@ PWD=/home/ubuntu/vuls/
 cd /home/ubuntu/vuls
 
 
-sudo apt-get install debian-goodies
+sudo apt-get install debian-goodies -y
 
+touch /home/ubuntu/b25 .txt
 
 
 
