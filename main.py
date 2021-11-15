@@ -2,9 +2,27 @@ import argparse
 from art import text2art
 import random
 import boto3
+import os
+import glob
 from src.logger import setup_logger
 from src.snapper import Snapper
 from src.scanner import Scanner
+
+
+def getting_all_pem_file_names():
+    """
+    :return: .pem file names from the red-detector directory.
+    """
+    file_path = os.path.realpath(__file__)  # getting the script's path
+    file_path = file_path.split("red-detector")
+    files_path = file_path[0] + "red-detector"  # (the pem files arent in the same directory as the script.)
+
+    lst = (glob.glob(files_path+"/*.pem"))
+    index = 0
+    for i in lst:
+        lst[index] = lst[index].replace(files_path+"/", "").replace(".pem","")
+        index += 1
+    return lst
 
 
 def used_key_pairs():
@@ -52,10 +70,11 @@ if __name__ == "__main__":
     if cmd_args.keypair:
         scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=cmd_args.keypair)
     else:
-        used_key_pairs_list = used_key_pairs()
+        used_key_pairs_list_from_aws = used_key_pairs()
+        used_key_pairs_list_locally = getting_all_pem_file_names()
         num = 0
         key_name = "red_detector_key{number}".format(number=str(num))
-        while key_name in used_key_pairs_list:
+        while key_name in used_key_pairs_list_from_aws or key_name in used_key_pairs_list_locally:
             num += 1
             key_name = "red_detector_key{number}".format(number=str(num))
 
