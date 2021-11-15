@@ -278,16 +278,17 @@ sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_re
 
 
 # Vuls scan
+
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
 
-touch /home/ubuntu/b1 .txt
+touch /home/ubuntu/b1.txt
 
 sudo cat > ~/.ssh/config <<EOF
 Host *
     StrictHostKeyChecking no
 EOF
 
-touch /home/ubuntu/b2 .txt
+touch /home/ubuntu/b2.txt
 
 PWD=/home/ubuntu/vuls/
 cd /home/ubuntu/vuls
@@ -295,7 +296,7 @@ cd /home/ubuntu/vuls
 
 sudo apt-get install debian-goodies -y
 
-touch /home/ubuntu/b2-5 .txt
+touch /home/ubuntu/b2-5.txt
 
 
 
