@@ -3,6 +3,7 @@ import random
 import time
 
 import boto3
+import subprocess
 import paramiko
 import requests
 from botocore.exceptions import ClientError, WaiterError
@@ -26,7 +27,7 @@ class Scanner:
         except ClientError as err:
             if err.response["Error"]["Code"] == "InvalidKeyPair.Duplicate":
                 self.logger.warning(f"key pair: {key_name} already exists.")
-                val = input("use the existing keypair?[Y/N] \n")
+                val = input("use the existing keypair?[Y/N]\n")
                 if val.lower() == "y":
                     return key_name
             self.logger.error(f"create key pair: {err}")
@@ -34,6 +35,7 @@ class Scanner:
         self.logger.info('creating key pair: {red_detector_key}'.format(red_detector_key=self.key_pair_name))
         with open(self.key_pair_name+'.pem', 'w') as f:  # NEED TO OPEN A LOCAL FILE FOR "OLD" KEY PAIR TOO.
             f.write(new_keypair.key_material)
+            output = subprocess.getoutput("chmod 400 "+self.key_pair_name+'.pem')
         return key_name
 
     @staticmethod

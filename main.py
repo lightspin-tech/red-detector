@@ -36,6 +36,7 @@ def used_key_pairs():
 
 
 if __name__ == "__main__":
+    print("in this file")
     parser = argparse.ArgumentParser()
     parser.add_argument('--region', action='store', dest='region', type=str,
                         help='region name', required=False)
