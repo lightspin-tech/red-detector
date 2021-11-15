@@ -1,4 +1,5 @@
 script_a = '''#!/bin/bash -ex
+touch /home/ubuntu/startA.txt
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
@@ -23,6 +24,8 @@ sudo docker pull vuls/go-exploitdb
 sudo docker pull vuls/gost
 sudo docker pull vuls/vuls
 
+touch /home/ubuntu/A1.txt
+
 
 cd /home/ubuntu/vuls/
 sudo docker run --rm -i \
@@ -30,7 +33,7 @@ sudo docker run --rm -i \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
     vuls/go-cve-dictionary fetch nvd
 
-
+touch /home/ubuntu/A2.txt
 
 sudo docker run --rm -i \
     -v $PWD:/vuls \
@@ -42,7 +45,7 @@ sudo docker run --rm -i \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch debian 7 8 9 10
     
-dsudo ocker run --rm -i \
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
@@ -74,7 +77,7 @@ sudo docker run --rm -i \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
     
-
+touch /home/ubuntu/A3.txt
 
 touch config_scan.toml
 
