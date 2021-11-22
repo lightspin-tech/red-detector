@@ -218,7 +218,7 @@ class Scanner:
                 ssh.connect(hostname=ec2_instance_public_ip, username='ubuntu', pkey=privet_key)
                 connect = 1
             except Exception as err:
-                self.logger.error(f"failed connecting to EC2 instance: {err}")
+                self.logger.error(f"failed connecting to EC2 instance: {err}. Trying again...")
 
         wait_4_update = True
         c = 0

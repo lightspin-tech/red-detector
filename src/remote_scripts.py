@@ -132,7 +132,7 @@ if [ -f "$FILE" ]; then
 ssh-keygen -q -f ~/.ssh/id_rsa_vuls -N ""
 sudo cat ~/.ssh/id_rsa_vuls.pub > /tmp/tmp_authorized_keys
 sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
-sudo chown root:root /vol/root/.ssh/tmp_authorized_keys 
+sudo chown root:root /vol/root/.ssh/tmp_authorized_keys
 sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
 
 
