@@ -61,7 +61,11 @@ if __name__ == "__main__":
     snapper.create_client()
 
     if cmd_args.instance_id:
-        source_volume_id = snapper.get_instance_root_vol(instance_id=cmd_args.instance_id)
+        try:
+            source_volume_id = snapper.get_instance_root_vol(instance_id=cmd_args.instance_id)
+        except Exception as e:
+            print(e, " :(probably problem with the given instance id)")
+            exit(99)
     else:
         source_volume_id = snapper.select_ec2_instance()
 
