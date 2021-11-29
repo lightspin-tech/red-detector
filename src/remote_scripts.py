@@ -25,9 +25,9 @@ sudo docker pull vuls/gost
 sudo docker pull vuls/vuls
 
 touch /home/ubuntu/A1.txt
+cd /home/ubuntu/vuls
 
 
-cd /home/ubuntu/vuls/
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
@@ -39,6 +39,8 @@ sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch redhat 5 6 7 8
+
+
 
 sudo docker run --rm -i \
     -v $PWD:/vuls \
@@ -54,6 +56,7 @@ sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
+
 
 
 sudo docker run --rm -i \
@@ -76,6 +79,7 @@ sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
+
     
 touch /home/ubuntu/A3.txt
 
@@ -312,9 +316,15 @@ sudo docker run --rm -i \
 vuls/vuls scan \
 -config=./config_scan.toml
 
-touch /home/ubuntu/b3 .txt
+touch /home/ubuntu/b3.txt
 
-echo "Creating report..."
+sudo docker run --rm -i \
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch ubuntu 19 20
+    
+touch /home/ubuntu/b3_5.txt
+
 sudo docker run --rm -i \
     -v /home/ubuntu/.ssh:/root/.ssh:ro \
     -v /home/ubuntu/vuls:/vuls \
@@ -323,6 +333,8 @@ sudo docker run --rm -i \
     vuls/vuls report \
     -format-list \
     -config=./config_db.toml
+
+touch /home/ubuntu/b4.txt
 
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
