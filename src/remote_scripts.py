@@ -1,5 +1,4 @@
 script_a = '''#!/bin/bash -ex
-touch /home/ubuntu/startA.txt
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
@@ -14,8 +13,6 @@ apt-get install chkrootkit -y
 
 mkdir -p chkrootkit && cd chkrootkit
 
-
-
 cd /home/ubuntu/vuls
 sudo docker pull vuls/go-cve-dictionary
 sudo docker pull vuls/goval-dictionary
@@ -24,23 +21,17 @@ sudo docker pull vuls/go-exploitdb
 sudo docker pull vuls/gost
 sudo docker pull vuls/vuls
 
-touch /home/ubuntu/A1.txt
 cd /home/ubuntu/vuls
-
 
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
     vuls/go-cve-dictionary fetch nvd
 
-touch /home/ubuntu/A2.txt
-
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch redhat 5 6 7 8
-
-
 
 sudo docker run --rm -i \
     -v $PWD:/vuls \
@@ -57,8 +48,6 @@ sudo docker run --rm -i \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
 
-
-
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
@@ -68,7 +57,6 @@ sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch amazon  
-
 
 sudo docker run --rm -i \
     -v $PWD:/vuls \
@@ -80,8 +68,6 @@ sudo docker run --rm -i \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
 
-    
-touch /home/ubuntu/A3.txt
 
 touch config_scan.toml
 
@@ -123,11 +109,8 @@ touch /tmp/userData.finished
 script_b = '''
 set -ex
 
-touch /home/ubuntu/startB.txt
-
 sudo mkdir -p /vol/
 sudo mount {mount_point} /vol/
-
 
 FILE="/vol/usr/sbin/sshd"
 if [ -f "$FILE" ]; then
@@ -139,12 +122,10 @@ sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
 sudo chown root:root /vol/root/.ssh/tmp_authorized_keys
 sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
 
-
 sudo mount -t proc none /vol/proc
 sudo mount -o bind /dev /vol/dev
 sudo mount -o bind /sys /vol/sys
 sudo mount -o bind /run /vol/run
-
 
 sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
 # Reporting
@@ -259,7 +240,6 @@ sudo docker run --name docker-nginx -p {port}:80 -d -v /home/ubuntu/nginx/html:/
 
 
 # Lynis audit
-touch /home/ubuntu/bStartingLynis.txt
  
 
 sudo cp /home/ubuntu/lynis-3.0.3.tar.gz /vol/root/
@@ -274,36 +254,27 @@ sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/
 sudo su -c "chroot /vol lynis audit system" | ansi2html > /home/ubuntu/nginx/html/lynis_report.html
 
 
-touch /home/ubuntu/bEndedLynis.txt
 # Chkrootkit scan
 cd /home/ubuntu/chkrootkit
 # sudo ./chkrootkit -r /vol | sed -n '/INFECTED/,/Searching/p' | head -n -1 | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 
-
 # Vuls scan
 
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
 
-touch /home/ubuntu/b1.txt
 
 sudo cat > ~/.ssh/config <<EOF
 Host *
     StrictHostKeyChecking no
 EOF
 
-touch /home/ubuntu/b2.txt
 
 PWD=/home/ubuntu/vuls/
 cd /home/ubuntu/vuls
 
 
 sudo apt-get install debian-goodies -y
-
-touch /home/ubuntu/b2-5.txt
-
-
-
 
 
 echo "Scanning..."
@@ -316,14 +287,22 @@ sudo docker run --rm -i \
 vuls/vuls scan \
 -config=./config_scan.toml
 
-touch /home/ubuntu/b3.txt
 
 sudo docker run --rm -i \
     -v $PWD:/goval-dictionary \
     -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
     vuls/goval-dictionary fetch ubuntu 19 20
     
-touch /home/ubuntu/b3_5.txt
+    
+sudo docker run --rm -i \
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch amazon 2
+    
+sudo docker run --rm -i \
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch amazon
 
 sudo docker run --rm -i \
     -v /home/ubuntu/.ssh:/root/.ssh:ro \
@@ -334,17 +313,14 @@ sudo docker run --rm -i \
     -format-list \
     -config=./config_db.toml
 
-touch /home/ubuntu/b4.txt
 
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
 fi
 
-touch /home/ubuntu/endofB.txt
 '''
 
 script_c = '''
-touch /home/ubuntu/startC.txt
 set -ex
 echo "Starting report webUI..."
 
@@ -356,5 +332,4 @@ sudo docker run -dt --name vuls-report-srv-{instance_id} \
     ishidaco/vulsrepo
 
 echo "Check the report at: http://{ip_address}:{port}"
-touch /home/ubuntu/endofC.txt
 '''
