@@ -23,32 +23,26 @@ sudo docker pull vuls/vuls
 sudo apt install python3-pip -y
 pip3 install subprocess.run
 pip install subprocess.run
-touch /home/ubuntu/a0.txt
+
 
 cd /home/ubuntu/vuls
-touch /home/ubuntu/a1.txt
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
     vuls/go-cve-dictionary fetch nvd
-touch /home/ubuntu/a2.txt
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch redhat 5 6 7 8
-touch /home/ubuntu/a3.txt
 
-touch /home/ubuntu/a4.txt
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
-touch /home/ubuntu/a5.txt
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
     vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
-touch /home/ubuntu/a6.txt
 sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
@@ -69,7 +63,7 @@ sudo docker run --rm -i \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
 
-touch /home/ubuntu/a7.txt
+
 touch config_scan.toml
 
 cat > config_scan.toml <<EOF
@@ -108,29 +102,48 @@ touch /tmp/userData.finished
 '''
 
 script_b = '''
+
 set -ex
 
 sudo mkdir -p /vol/
+
 sudo mount {mount_point} /vol/
 
 FILE="/vol/usr/sbin/sshd"
-if [ -f "$FILE" ]; then
+
+
+
 /bin/rm -f ~/.ssh/id_rsa_vuls
+
 /bin/rm -f ~/.ssh/id_rsa_vuls.pub
 ssh-keygen -q -f ~/.ssh/id_rsa_vuls -N ""
+
+
 sudo cat ~/.ssh/id_rsa_vuls.pub > /tmp/tmp_authorized_keys
+
+
 sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
+
+
 sudo chown root:root /vol/root/.ssh/tmp_authorized_keys
+
+
 sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
+
+
+
+
 
 sudo mount -t proc none /vol/proc
 sudo mount -o bind /dev /vol/dev
 sudo mount -o bind /sys /vol/sys
 sudo mount -o bind /run /vol/run
 
+
 sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
 # Reporting
 mkdir -p /home/ubuntu/nginx/html
+
 cat > /home/ubuntu/nginx/default.conf <<EOF
 server {{
     listen       80;
@@ -243,19 +256,8 @@ sudo docker run --name docker-nginx -p {port}:80 -d -v /home/ubuntu/nginx/html:/
 # Lynis audit
  
 
-touch /home/ubuntu/b1.txt
-#sudo cp /home/ubuntu/lynis-3.0.3.tar.gz /vol/root/
-
-
-#sudo su -c "chroot /vol tar xvf /root/lynis-3.0.3.tar.gz -C /root/"
-
-
-#sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/root/lynis/run.sh && chmod +x /vol/root/lynis/run.sh"
-touch /home/ubuntu/b2.txt
 sudo su -c "chroot /vol apt install lynis -y"
-touch /home/ubuntu/b3.txt
 sudo su -c "chroot /vol lynis audit system" | ansi2html > /home/ubuntu/nginx/html/lynis_report.html
-touch /home/ubuntu/b4.txt
 
 
 
@@ -336,7 +338,7 @@ sudo docker run --rm -i \
 
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
-fi
+
 
 '''
 

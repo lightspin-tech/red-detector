@@ -248,13 +248,10 @@ class Scanner:
                 mount_list.append(mount_dev)
 
         for mount in mount_list:
-
             stdin, stdout, stderr = ssh.exec_command(
                 remote_scripts.script_b.format(port=report_service_port, ip_address=ec2_instance_public_ip,
                                                instance_id=ec2_instance_id,
                                                mount_point=mount))
-
-            # add here code to take the chkrootkit output add save it to the wanted place on the ec2.
 
 
             stdout = stdout.readlines()

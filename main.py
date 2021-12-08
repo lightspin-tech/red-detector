@@ -64,7 +64,7 @@ if __name__ == "__main__":
         try:
             source_volume_id = snapper.get_instance_root_vol(instance_id=cmd_args.instance_id)
         except Exception as e:
-            print(e, " : (probably problem with the given instance id)")
+            print(e, " : (probably problem with the given instance id or internet connection)")
             exit(99)
     else:
         source_volume_id = snapper.select_ec2_instance()
