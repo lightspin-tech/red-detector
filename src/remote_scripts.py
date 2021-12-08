@@ -111,34 +111,23 @@ sudo mount {mount_point} /vol/
 
 FILE="/vol/usr/sbin/sshd"
 
-
-
 /bin/rm -f ~/.ssh/id_rsa_vuls
 
 /bin/rm -f ~/.ssh/id_rsa_vuls.pub
 ssh-keygen -q -f ~/.ssh/id_rsa_vuls -N ""
 
-
 sudo cat ~/.ssh/id_rsa_vuls.pub > /tmp/tmp_authorized_keys
-
 
 sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
 
-
 sudo chown root:root /vol/root/.ssh/tmp_authorized_keys
 
-
 sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
-
-
-
-
 
 sudo mount -t proc none /vol/proc
 sudo mount -o bind /dev /vol/dev
 sudo mount -o bind /sys /vol/sys
 sudo mount -o bind /run /vol/run
-
 
 sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
 # Reporting
@@ -249,19 +238,14 @@ cat > /home/ubuntu/nginx/html/index.html <<EOF
 </html>
 EOF
 
-
 sudo docker run --name docker-nginx -p {port}:80 -d -v /home/ubuntu/nginx/html:/usr/share/nginx/html -v /home/ubuntu/nginx/default.conf:/etc/nginx/conf.d/default.conf nginx
-
 
 # Lynis audit
  
-
 sudo su -c "chroot /vol apt install lynis -y"
 sudo su -c "chroot /vol lynis audit system" | ansi2html > /home/ubuntu/nginx/html/lynis_report.html
 
-
-
-# Chkrootkit scan: ********************************************************************************------()()()
+# Chkrootkit scan 
 cd /home/ubuntu/chkrootkit
 # sudo ./chkrootkit -r /vol | sed -n '/INFECTED/,/Searching/p' | head -n -1 | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 # sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
@@ -279,25 +263,18 @@ with open ("/home/ubuntu/nginx/html/chkrootkit_report.html",'w') as f:
     f.write(str(chkrootkit_output))
 EOF
 python3 chkrootkit_script.py
-
-
 # Vuls scan
-
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
-
 
 sudo cat > ~/.ssh/config <<EOF
 Host *
     StrictHostKeyChecking no
 EOF
 
-
 PWD=/home/ubuntu/vuls/
 cd /home/ubuntu/vuls
 
-
 sudo apt-get install debian-goodies -y
-
 
 echo "Scanning..."
 sudo docker run --rm -i \
@@ -309,12 +286,10 @@ sudo docker run --rm -i \
 vuls/vuls scan \
 -config=./config_scan.toml
 
-
 sudo docker run --rm -i \
     -v $PWD:/goval-dictionary \
     -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
     vuls/goval-dictionary fetch ubuntu 19 20
-    
     
 sudo docker run --rm -i \
     -v $PWD:/goval-dictionary \
@@ -335,13 +310,9 @@ sudo docker run --rm -i \
     -format-list \
     -config=./config_db.toml
 
-
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
-
-
 '''
-
 script_c = '''
 set -ex
 echo "Starting report webUI..."
