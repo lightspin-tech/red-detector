@@ -2,24 +2,44 @@ import subprocess
 import argparse
 import sys
 import threading
+import datetime
 import boto3
-
-# Ill change this later by the method we will choose. this is kind of a poc...
-def scan(region, id, keypair, log_level):
-    command = "python3 main.py --region {region} --instance-id {id} --keypair {keypair} --log-level {loglevel}". \
-        format(region=region, id=id, keypair=keypair, loglevel=log_level)
-    output = subprocess.getoutput(command)
-    print(output)
+begin_time = datetime.datetime.now()
 
 
+class Scan(threading.Thread):
+    def __init__(self, instance_region, instance_id, instance_keypair, instance_log_level):
+        threading.Thread.__init__(self)
+        self.region = instance_region
+        self.id = instance_id
+        self.keypair = instance_keypair
+        self.log_level = instance_log_level
+
+    def run(self):
+        """
+        running the main with "one instance at a time" (in threads of course)
+        """
+        command = "python3 main.py --region {region} --instance-id {id} --keypair {keypair} --log-level {loglevel}". \
+            format(region=self.region, id=self.id, keypair=self.keypair, loglevel=self.log_level)
+        command = command.split(" ")  # the command should be in this format in order to get live output
+        with open('test.log', 'wb') as f:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE)
+            for c in iter(lambda: process.stdout.readline(1), b''):
+                # sys.stdout.write(" [ From: " + self.instance_id + " ]" + str(c))
+                pass
+
+
+"""
 ec2 = boto3.resource('ec2')
 lst_of_account_instances = []  # this lst will contain all of the running instances ids. for scanning later
 for instance in ec2.instances.all():
-    if "16" in str(instance.state):  # getting just the running instances
+    if str(instance.state["Code"]) == "16":  # getting just the running instances
         lst_of_account_instances.append(instance.id)
+"""
 
 
-exit(99)
 parser = argparse.ArgumentParser()
 parser.add_argument('--region', action='store', dest='region', type=str,
                     help='region name', required=False)
@@ -45,8 +65,14 @@ if cmd_args.log_level:
     log_level = cmd_args.log_level
 
 lst_of_ids = source_volume_id.split("_")  # need to provide the ids with a _ between them.
-for id in lst_of_ids:
-    # scan(region, id, keypair, log_level)
-    x = threading.Thread(target=scan, args=(region, id, keypair, log_level,))
-    x.start()
+print(lst_of_ids)
+threads = []
+for instance_id in lst_of_ids:
+    instance_scan = Scan(region, instance_id, keypair, log_level)
+    instance_scan.start()
+    threads.append(instance_scan)
 
+for x in threads:
+    x.join() # wait for all of the threads to end.
+
+print(datetime.datetime.now() - begin_time)

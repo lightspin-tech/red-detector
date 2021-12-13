@@ -46,8 +46,8 @@ if __name__ == "__main__":
     parser.add_argument('--log-level', action='store', dest='log_level', type=str,
                         help='log level', required=False, default="INFO")
 
-    text_art = text2art("RED   DETECTOR")
-    print(text_art)
+    # text_art = text2art("RED   DETECTOR")
+    # print(text_art)
     print("            +++ WELCOME RED-DETECTOR - CVE SCANNER USING VULS +++\n\n")
 
     cmd_args = parser.parse_args()
