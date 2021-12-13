@@ -31,82 +31,93 @@ class Scan(threading.Thread):
                 # sys.stdout.write(" [ From: " + self.instance_id + " ]" + str(c))
                 pass
 
+if __name__ == "__main__":
 
-"""
-account scan:
-ec2 = boto3.resource('ec2')
-lst_of_account_instances = []  # this lst will contain all of the running instances ids. for scanning later
-for instance in ec2.instances.all():
-    if str(instance.state["Code"]) == "16":  # getting just the running instances
-        lst_of_account_instances.append(instance.id)
-"""
+    text_art = text2art("RED   DETECTOR")
+    print(text_art)
+    print("            +++ WELCOME RED-DETECTOR - CVE SCANNER USING VULS +++\n\n")
 
-"""
-region-based scan
-client = boto3.client('ec2')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--region', action='store', dest='region', type=str,
+                        help='region name', required=False)
+    parser.add_argument('--instance-id', action='store', dest='instance_id', type=str,
+                        help='EC2 instance id', required=False)
+    parser.add_argument('--keypair', action='store', dest='keypair', type=str,
+                        help='existing key pair name', required=False)
+    parser.add_argument('--log-level', action='store', dest='log_level', type=str,
+                        help='log level', required=False, default="INFO")
+    region = "us-east-2"
+    source_volume_id = "id"
+    keypair = "red_detector_key3"
+    log_level = "INFO"
 
-ec2_regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
-print(ec2_regions)
-for region in ec2_regions:
-    conn = boto3.resource('ec2', region_name=region)
-    instances = conn.instances.filter()
-    for instance in instances:
-        if instance.state["Name"] == "running":
-            # without the if below: scan all regions.
-            if region == "us-east-2":
-                print(instance.id, instance.instance_type, region)
-"""
+    """
+    sample inputs for instance-id:
+    *    ami-0fb653ca2d3203ac1
+    *    i-008966f80522a3c34_i-0ff28ad4240aef353
+    *    account_scan
+    *    regions:
+    """
 
 
-"""
-ami-based scan:
-import boto3
-ami = "ami-0fb653ca2d3203ac1"
-client = boto3.client('ec2')
-Myec2 = client.describe_instances()
-for pythonins in Myec2['Reservations']:
-    for i in pythonins["Instances"]:
-        if i['ImageId'] == ami:
-            print(i['InstanceId'])
-"""
+    cmd_args = parser.parse_args()
+    if cmd_args.region:
+        region = cmd_args.region
+    if cmd_args.instance_id:
+        source_volume_id = cmd_args.instance_id
+    if cmd_args.keypair:
+        keypair = cmd_args.keypair
+    if cmd_args.log_level:
+        log_level = cmd_args.log_level
 
-text_art = text2art("RED   DETECTOR")
-print(text_art)
-print("            +++ WELCOME RED-DETECTOR - CVE SCANNER USING VULS +++\n\n")
+    lst_of_ids = []
+    ec2 = boto3.resource('ec2')
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--region', action='store', dest='region', type=str,
-                    help='region name', required=False)
-parser.add_argument('--instance-id', action='store', dest='instance_id', type=str,
-                    help='EC2 instance id', required=False)
-parser.add_argument('--keypair', action='store', dest='keypair', type=str,
-                    help='existing key pair name', required=False)
-parser.add_argument('--log-level', action='store', dest='log_level', type=str,
-                    help='log level', required=False, default="INFO")
-region = "us-east-2"
-source_volume_id = "id"
-keypair = "red_detector_key3"
-log_level = "INFO"
+    if source_volume_id == "account_scan":
+        ec2 = boto3.resource('ec2')
+        for instance in ec2.instances.all():
+            if str(instance.state["Code"]) == "16":  # getting just the running instances
+                lst_of_ids.append(instance.id)
 
-cmd_args = parser.parse_args()
-if cmd_args.region:
-    region = cmd_args.region
-if cmd_args.instance_id:
-    source_volume_id = cmd_args.instance_id
-if cmd_args.keypair:
-    keypair = cmd_args.keypair
-if cmd_args.log_level:
-    log_level = cmd_args.log_level
+    elif "region" in source_volume_id:  # input in this form:  region:us-east-2
+        # source_volume_id = "regions:us-east-2,us-east-1"
+        source_volume_id = source_volume_id.replace("regions:", "")
+        try:
+            regions = source_volume_id.split(",")
+        except:
+            regions = source_volume_id[0]  # means got one region
+        source_volume_id = source_volume_id.split(":")
+        client = boto3.client('ec2')
+        for region in regions:
+            conn = boto3.resource('ec2', region_name=region)
+            instances = conn.instances.filter()
+            for instance in instances:
+                if instance.state["Name"] == "running":
+                    # without the if below: scan all regions.
+                    if region in regions:
+                        # print(instance.id, instance.instance_type, region)
+                        lst_of_ids.append(instance.id)
+    elif "ami" in source_volume_id:
+        # ami = "ami-0fb653ca2d3203ac1"
+        ami = source_volume_id
+        client = boto3.client('ec2')
+        cl = client.describe_instances()
+        for data in cl['Reservations']:
+            for i in data["Instances"]:
+                if i['ImageId'] == ami:
+                    lst_of_ids.append(i['InstanceId'])
+    else:
+        lst_of_ids = source_volume_id.split("_")  # need to provide the ids with a _ between them.
 
-lst_of_ids = source_volume_id.split("_")  # need to provide the ids with a _ between them.
-print(lst_of_ids)
-threads = []
-for instance_id in lst_of_ids:
-    instance_scan = Scan(region, instance_id, keypair, log_level)
-    instance_scan.start()
-    threads.append(instance_scan)
-
-for x in threads:
-    x.join()  # wait for all the threads to end.
-
-print(datetime.datetime.now() - begin_time)
+    print("Going to scan: ", lst_of_ids)
+    threads = []
+    for instance_id in lst_of_ids:
+        # print(instance_id)
+        instance_scan = Scan(region, instance_id, keypair, log_level)
+        instance_scan.start()
+        threads.append(instance_scan)
+    
+    for x in threads:
+        x.join()  # wait for all the threads to end.
+    
+print("Time took to execute: ", datetime.datetime.now() - begin_time)
