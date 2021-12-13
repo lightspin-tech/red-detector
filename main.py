@@ -1,92 +1,112 @@
+import subprocess
 import argparse
+import sys
+import threading
 from art import text2art
-import random
+import datetime
 import boto3
-import os
-import glob
-from src.logger import setup_logger
-from src.snapper import Snapper
-from src.scanner import Scanner
+begin_time = datetime.datetime.now()
 
 
-def getting_all_pem_file_names():
-    """
-    :return: .pem file names from the red-detector directory.
-    """
-    file_path = os.path.realpath(__file__)  # getting the script's path
-    file_path = file_path.split("red-detector")
-    files_path = file_path[0] + "red-detector"  # (the pem files arent in the same directory as the script.)
+class Scan(threading.Thread):
+    def __init__(self, instance_region, instance_id, instance_keypair, instance_log_level):
+        threading.Thread.__init__(self)
+        self.region = instance_region
+        self.id = instance_id
+        self.keypair = instance_keypair
+        self.log_level = instance_log_level
 
-    lst = (glob.glob(files_path+"/*.pem"))
-    index = 0
-    for i in lst:
-        lst[index] = lst[index].replace(files_path+"/", "").replace(".pem","")
-        index += 1
-    return lst
-
-
-def used_key_pairs():
-    keypairs = []  # list of used keyPair names
-    ec2 = boto3.client('ec2')
-    response = ec2.describe_key_pairs()
-
-    for i in response["KeyPairs"]:
-        keypairs.append(i["KeyName"])
-    return keypairs
+    def run(self):
+        """
+        running the main with "one instance at a time" (in threads of course)
+        """
+        command = "python3 exec.py --region {region} --instance-id {id} --keypair {keypair} --log-level {loglevel}". \
+            format(region=self.region, id=self.id, keypair=self.keypair, loglevel=self.log_level)
+        command = command.split(" ")  # the command should be in this format in order to get live output
+        with open('test.log', 'wb') as f:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE)
+            for c in iter(lambda: process.stdout.readline(1), b''):
+                # sys.stdout.write(" [ From: " + self.instance_id + " ]" + str(c))
+                pass
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--region', action='store', dest='region', type=str,
-                        help='region name', required=False)
-    parser.add_argument('--instance-id', action='store', dest='instance_id', type=str,
-                        help='EC2 instance id', required=False)
-    parser.add_argument('--keypair', action='store', dest='keypair', type=str,
-                        help='existing key pair name', required=False)
-    parser.add_argument('--log-level', action='store', dest='log_level', type=str,
-                        help='log level', required=False, default="INFO")
+"""
+account scan:
+ec2 = boto3.resource('ec2')
+lst_of_account_instances = []  # this lst will contain all of the running instances ids. for scanning later
+for instance in ec2.instances.all():
+    if str(instance.state["Code"]) == "16":  # getting just the running instances
+        lst_of_account_instances.append(instance.id)
+"""
 
-    # text_art = text2art("RED   DETECTOR")
-    # print(text_art)
-    print("            +++ WELCOME RED-DETECTOR - CVE SCANNER USING VULS +++\n\n")
+"""
+region-based scan
+client = boto3.client('ec2')
 
-    cmd_args = parser.parse_args()
-    logger = setup_logger(log_level=cmd_args.log_level)
-    snapper = Snapper(logger=logger)
-    if cmd_args.region:
-        snapper.region = cmd_args.region
-    else:
-        snapper.region = snapper.select_region()
+ec2_regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+print(ec2_regions)
+for region in ec2_regions:
+    conn = boto3.resource('ec2', region_name=region)
+    instances = conn.instances.filter()
+    for instance in instances:
+        if instance.state["Name"] == "running":
+            # without the if below: scan all regions.
+            if region == "us-east-2":
+                print(instance.id, instance.instance_type, region)
+"""
 
-    snapper.create_client()
 
-    if cmd_args.instance_id:
-        try:
-            source_volume_id = snapper.get_instance_root_vol(instance_id=cmd_args.instance_id)
-        except Exception as e:
-            print(e, " : (probably problem with the given instance id or internet connection)")
-            exit(99)
-    else:
-        source_volume_id = snapper.select_ec2_instance()
+"""
+ami-based scan:
+import boto3
+ami = "ami-0fb653ca2d3203ac1"
+client = boto3.client('ec2')
+Myec2 = client.describe_instances()
+for pythonins in Myec2['Reservations']:
+    for i in pythonins["Instances"]:
+        if i['ImageId'] == ami:
+            print(i['InstanceId'])
+"""
 
-    volume_id, selected_az, snapshot_id = snapper.snapshot2volume(volume_id=source_volume_id)
+text_art = text2art("RED   DETECTOR")
+print(text_art)
+print("            +++ WELCOME RED-DETECTOR - CVE SCANNER USING VULS +++\n\n")
 
-    if cmd_args.keypair:
-        scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=cmd_args.keypair)
-    else:
-        used_key_pairs_list_from_aws = used_key_pairs()
-        used_key_pairs_list_locally = getting_all_pem_file_names()
-        num = 0
-        key_name = "red_detector_key{number}".format(number=str(num))
-        while key_name in used_key_pairs_list_from_aws or key_name in used_key_pairs_list_locally:
-            num += 1
-            key_name = "red_detector_key{number}".format(number=str(num))
+parser = argparse.ArgumentParser()
+parser.add_argument('--region', action='store', dest='region', type=str,
+                    help='region name', required=False)
+parser.add_argument('--instance-id', action='store', dest='instance_id', type=str,
+                    help='EC2 instance id', required=False)
+parser.add_argument('--keypair', action='store', dest='keypair', type=str,
+                    help='existing key pair name', required=False)
+parser.add_argument('--log-level', action='store', dest='log_level', type=str,
+                    help='log level', required=False, default="INFO")
+region = "us-east-2"
+source_volume_id = "id"
+keypair = "red_detector_key3"
+log_level = "INFO"
 
-        scanner = Scanner(logger=logger, region=snapper.region, key_pair_name=key_name)
-        scanner.keypair_name = scanner.create_keypair(key_name=key_name)
+cmd_args = parser.parse_args()
+if cmd_args.region:
+    region = cmd_args.region
+if cmd_args.instance_id:
+    source_volume_id = cmd_args.instance_id
+if cmd_args.keypair:
+    keypair = cmd_args.keypair
+if cmd_args.log_level:
+    log_level = cmd_args.log_level
 
-    ec2_instance_id, ec2_instance_public_ip, report_service_port = scanner.create_ec2(selected_az=selected_az)
-    scanner.attach_volume_to_ec2(ec2_instance_id=ec2_instance_id, volume_id=volume_id)
-    scanner.scan_and_report(ec2_instance_public_ip=ec2_instance_public_ip,
-                            report_service_port=report_service_port, ec2_instance_id=ec2_instance_id,
-                            snapshot_id=snapshot_id)
+lst_of_ids = source_volume_id.split("_")  # need to provide the ids with a _ between them.
+print(lst_of_ids)
+threads = []
+for instance_id in lst_of_ids:
+    instance_scan = Scan(region, instance_id, keypair, log_level)
+    instance_scan.start()
+    threads.append(instance_scan)
+
+for x in threads:
+    x.join()  # wait for all the threads to end.
+
+print(datetime.datetime.now() - begin_time)
