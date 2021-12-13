@@ -56,7 +56,7 @@ if __name__ == "__main__":
     *    ami-0fb653ca2d3203ac1
     *    i-008966f80522a3c34_i-0ff28ad4240aef353
     *    account_scan
-    *    regions:
+    *    regions:us-east-1,us-east-2
     """
 
 
