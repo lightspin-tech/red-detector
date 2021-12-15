@@ -269,7 +269,9 @@ class Scanner:
                 stdout = stdout.readlines()
                 for line in stdout:
                     self.logger.debug(line)
-                self.logger.info(f"Check the report at: http://{ec2_instance_public_ip}:{report_service_port}")
+                with open("results.txt","a") as f:
+                    f.write(f"Check the report at: http://{ec2_instance_public_ip}:{report_service_port} \n")
+                # self.logger.info(f"Check the report at: http://{ec2_instance_public_ip}:{report_service_port}")
                 wait_4_update = False
             else:
                 c += 1

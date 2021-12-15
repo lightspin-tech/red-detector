@@ -18,7 +18,7 @@ class Scan(threading.Thread):
 
     def run(self):
         """
-        running the main with "one instance at a time" (in threads of course)
+        running the exec file (old main) with "one instance at a time" (in threads of course)
         """
         command = "python3 exec.py --region {region} --instance-id {id} --keypair {keypair} --log-level {loglevel}". \
             format(region=self.region, id=self.id, keypair=self.keypair, loglevel=self.log_level)
@@ -30,6 +30,7 @@ class Scan(threading.Thread):
             for c in iter(lambda: process.stdout.readline(1), b''):
                 # sys.stdout.write(" [ From: " + self.instance_id + " ]" + str(c))
                 pass
+
 
 if __name__ == "__main__":
 
@@ -56,9 +57,8 @@ if __name__ == "__main__":
     *    ami-0fb653ca2d3203ac1
     *    i-008966f80522a3c34_i-0ff28ad4240aef353
     *    account_scan
-    *    regions:
+    *    regions:us-esat-1...
     """
-
 
     cmd_args = parser.parse_args()
     if cmd_args.region:
@@ -119,5 +119,9 @@ if __name__ == "__main__":
     
     for x in threads:
         x.join()  # wait for all the threads to end.
-    
+with open("results.txt", "r") as f:
+    for line in f:
+        print(line)
+with open("results.txt", "w") as f:
+    pass
 print("Time took to execute: ", datetime.datetime.now() - begin_time)

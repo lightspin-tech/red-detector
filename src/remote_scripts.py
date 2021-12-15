@@ -312,9 +312,10 @@ sudo docker run --rm -i \
 
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
+
+
 '''
 script_c = '''
-set -ex
 echo "Starting report webUI..."
 
 cd /home/ubuntu/vuls
@@ -325,4 +326,54 @@ sudo docker run -dt --name vuls-report-srv-{instance_id} \
     ishidaco/vulsrepo
 
 echo "Check the report at: http://{ip_address}:{port}"
+
+cd
+cd vuls
+sudo chmod 777 results
+cd results
+# the python script below should get the desired folder and remove it to nicer location.
+cat > permissions.py <<EOF
+import subprocess
+import os
+import time
+dir_name = ""
+dir = ""
+
+all_subdirs = [d for d in os.listdir('.') if os.path.isdir(d)]
+dir = all_subdirs[0]  
+
+# we will have only one subdir because each instance is used for only one scan. the
+# name is changing, the purpose of this script is mainly to get the name and a bit more.
+print(dir)
+command = "sudo chmod 777 {dir_name}".format(dir_name=dir)
+output = subprocess.getoutput(command)
+
+command1 = "cd {dir_name}; sudo chmod 777 host.json".format(dir_name=dir)
+output = subprocess.getoutput(command1)
+
+command2 = "mv /home/ubuntu/vuls/results/{dir_name}/host.json /home/ubuntu".format(dir_name=dir)
+output = subprocess.getoutput(command2)
+EOF
+
+python3 permissions.py
+
+cd
+# save only the cves from vuls output and save them to a file:
+cat > jsoning.py <<EOF
+import json
+with open("host.json", 'r') as outfile:
+    json_dict = json.loads(outfile.read())  # the json string
+json_cves = json_dict["scannedCves"]
+
+with open('cves.json', 'w') as outfile:
+    outfile.write("")
+for cve_name in json_cves:
+    data = json_cves[cve_name]
+    with open('cves.json', 'a') as outfile:
+        outfile.write(json.dumps(data) + "\n")
+
+EOF
+python3 jsoning.py
+
+
 '''

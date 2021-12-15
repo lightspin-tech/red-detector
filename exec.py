@@ -47,7 +47,7 @@ if __name__ == "__main__":
                         help='log level', required=False, default="INFO")
 
     cmd_args = parser.parse_args()
-    logger = setup_logger(id=cmd_args.instance_id,log_level=cmd_args.log_level)
+    logger = setup_logger(id=cmd_args.instance_id, log_level=cmd_args.log_level)
     snapper = Snapper(logger=logger)
     if cmd_args.region:
         snapper.region = cmd_args.region
