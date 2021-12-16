@@ -281,6 +281,10 @@ class Scanner:
             self.logger.error("generating scan report failed")
             exit(99)
 
+        stdin, stdout, stderr = ssh.exec_command(
+            remote_scripts.script_d)
+        stdout = stdout.readlines()
+        # self.logger.info("after running d:", stdout)
         ssh.close()
         self.logger.info(f"cleaning up snapshot: {snapshot_id}")
         try:
