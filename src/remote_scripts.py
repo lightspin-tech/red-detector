@@ -387,4 +387,77 @@ except:
 EOF
 python3 jsoning.py
 
+cd
+cat > chkrookitjson.py <<EOF
+import json
+
+file = ""
+suspicious_files = ""
+with open("/home/ubuntu/nginx/html/chkrootkit_report.html","r") as f:
+    file = f.read()
+
+file = file.split("<body>")
+file = file[1].splitlines()
+for i in file:
+    i = i.split("...")
+    try:
+        i[1] = i[1].strip()
+        data = {i[0]: i[1]}
+        if i[0] != "The following suspicious files and directories were found":
+            with open('rootkit.json', 'a') as outfile:
+                outfile.write(json.dumps(data))
+    except Exception as e:
+        # catch the suspicious files and directories:
+        if "/vol" in i[0] and "<pre>" not in i[0] and "Searching" not in i[0]:
+            suspicious_files += i[0] + " , "
+
+with open('rootkit.json', 'a') as outfile:
+    outfile.write(json.dumps({"The following suspicious files and directories were found": suspicious_files}))
+EOF
+python3 chkrookitjson.py
+
+
+
+cd
+cat > lynisjson.py <<EOF
+
+import json
+
+file = ""
+suspicious_files = ""
+with open("/home/ubuntu/nginx/html/lynis_report.html","r") as f:
+    file = f.read()
+
+file = file.replace("[0/3]","")
+file = file.split("<body>")
+file1 = file[1].split("Checking for system binaries that are required by Debian Tests...")
+
+file = file1[1].splitlines()
+for i in file:
+    if "-" in i and "--" not in i:
+        i = i.replace("<b class=HIG>", "")
+        i = i.replace("<b class=HIR>", "")
+        i = i.replace("<b class=HIY>", "")
+        i = i.replace("<b class=HIW>", "")
+        i = i.replace("<b class=WHI>", "")
+        i = i.replace("<b class=CYN>", "")
+        i = i.replace("</b>", "")
+        try:
+            i = i.split("[")
+
+            i[1] = i[1].replace("]", "")
+            i[0] = i[0].replace("-", "")
+            i[0] = i[0].strip()
+        except Exception as e:
+            pass  # things that come here are irrelevant data
+        if len(i) == 2:
+            with open('lynis.json', 'a') as outfile:
+                outfile.write(
+                    json.dumps({i[0]: i[1]}))
+        if "Running custom tests" in i[0]:
+            break
+
+
+EOF
+python3 lynisjson.py
 """

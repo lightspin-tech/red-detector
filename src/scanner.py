@@ -1,7 +1,6 @@
 import json
 import random
 import time
-
 import boto3
 import subprocess
 import paramiko
@@ -20,6 +19,7 @@ class Scanner:
         self.client = boto3.client('ec2', region_name=region)
         self.ec2 = boto3.resource('ec2', region_name=region)
         self.keypair_name = None
+        self.public_ip = ""
 
     def create_keypair(self, key_name):
         try:
@@ -176,6 +176,7 @@ class Scanner:
             self.logger.error(f"describe instances: {err}")
             exit(99)
         ec2_instance_public_ip = ec2_instance_describe['Reservations'][0]['Instances'][0]['PublicIpAddress']
+        self.public_ip = ec2_instance_public_ip
         self.logger.info(f"EC2 instance: {ec2_instance_id} is running ({ec2_instance_public_ip})")
         return ec2_instance_id, ec2_instance_public_ip, report_service_port
 
@@ -282,7 +283,11 @@ class Scanner:
             exit(99)
 
         stdin, stdout, stderr = ssh.exec_command(
-            remote_scripts.script_d)
+            remote_scripts.script_d, get_pty=True)
+
+        output = subprocess.getoutput('scp -i {ec2keypair} ubuntu@{ec2ip}:/home/ubuntu/rootkit.json . -y'
+                                      .format(ec2keypair=self.key_pair_name+".pem", ec2ip=self.public_ip))
+
         stdout = stdout.readlines()
         # self.logger.info("after running d:", stdout)
         ssh.close()
