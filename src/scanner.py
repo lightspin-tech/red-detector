@@ -33,7 +33,7 @@ class Scanner:
             self.logger.error(f"create key pair: {err}")
             exit(99)
         self.logger.info('creating key pair: {red_detector_key}'.format(red_detector_key=self.key_pair_name))
-        with open(self.key_pair_name+'.pem', 'w') as f:  # NEED TO OPEN A LOCAL FILE FOR "OLD" KEY PAIR TOO.
+        with open(self.key_pair_name+'.pem', 'w') as f:
             f.write(new_keypair.key_material)
             output = subprocess.getoutput("chmod 400 "+self.key_pair_name+'.pem')
         return key_name
