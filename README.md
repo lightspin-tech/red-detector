@@ -1,6 +1,6 @@
 # running the main now:
 - create new ec2.
-- install all the things there.
+- install all the tools etc there.
 - the creator class attaches the wanted volume to the ec2 we created. then mount it to local folder from the command script.
 - running most of the checks and save them as jsons on the created ec2.
 
@@ -12,5 +12,6 @@ before running:
 -  change "idan15" key name :)
 -  test more (especially around the sudo topic) the subprocess pip installation.
 -  change device name in class (not crucial).
-# how you can use that:
-In the project now, the json outputs are saved on the the home directory on the created ec2. can scp them to the kibana server etc'. in the kibana python file here there is a part of formatting the jsons the ndjson format and upload them to kibana
+-  
+# how you can use that with current project:
+In the project now (last PR), the json outputs are saved on the the home directory on the created ec2. can scp them to the kibana server etc'. in the kibana python file here there is a part of formatting the jsons the ndjson format and upload them to kibana. you can reference that in order to use kibana now.
