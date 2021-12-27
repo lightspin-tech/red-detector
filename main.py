@@ -49,7 +49,7 @@ if __name__ == "__main__":
                         help='log level', required=False, default="INFO")
     region = "us-east-2"
     source_volume_id = "id"
-    keypair = "red_detector_key3"
+    keypair = ""
     log_level = "INFO"
 
     """
