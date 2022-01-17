@@ -7,9 +7,7 @@ apt install docker.io build-essential binutils colorized-logs -y
 mkdir -p /home/ubuntu/vuls
 cd /home/ubuntu/
 wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
-wget ftp://ftp.pangeia.com.br/pub/seg/pac/chkrootkit.tar.gz
-mkdir -p chkrootkit && cd chkrootkit
-tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
+sudo apt install chkrootkit -y
 make sense
 
 cd /home/ubuntu/vuls
@@ -257,9 +255,7 @@ sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/
 sudo su -c "chroot /vol /root/lynis/run.sh" | ansi2html -l > /home/ubuntu/nginx/html/lynis_report.html
 
 # Chkrootkit scan
-cd /home/ubuntu/chkrootkit
-# sudo ./chkrootkit -r /vol | sed -n '/INFECTED/,/Searching/p' | head -n -1 | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
-sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
+sudo chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 
 # Vuls scan
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
