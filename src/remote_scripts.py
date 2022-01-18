@@ -10,15 +10,15 @@ wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
 sudo apt install chkrootkit -y
 
 cd /home/ubuntu/vuls
-docker pull vuls/go-cve-dictionary
-docker pull vuls/goval-dictionary
-docker pull vuls/gost
-docker pull vuls/go-exploitdb
-docker pull vuls/gost
-docker pull vuls/vuls
+docker pull vuls/go-cve-dictionary:v0.8.1
+docker pull vuls/goval-dictionary:v0.6.1
+docker pull docker pull vuls/go-exploitdb:v0.4.1
+docker pull docker pull vuls/gost:v0.4.0
+
+docker pull vuls/vuls:v0.19.2
 
 PWD=/home/ubuntu/vuls/
-docker run --rm -i\
+docker run --rm -i \
 -v $PWD:/vuls \
 -v $PWD/go-cve-dictionary-log:/var/log/vuls \
 vuls/go-cve-dictionary fetch nvd 
