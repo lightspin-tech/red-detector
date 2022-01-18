@@ -8,7 +8,6 @@ mkdir -p /home/ubuntu/vuls
 cd /home/ubuntu/
 wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
 sudo apt install chkrootkit -y
-make sense
 
 cd /home/ubuntu/vuls
 docker pull vuls/go-cve-dictionary
@@ -29,42 +28,42 @@ for i in `seq 2002 $(date +"%Y")`; do \
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-redhat 5 6 7 8
+    vuls/goval-dictionary fetch redhat 5 6 7 8
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-debian 7 8 9 10
+    vuls/goval-dictionary fetch debian 7 8 9 10
     
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
+    vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-ubuntu 14 16 18 19 20
+    vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -opensuse 13.2
+    vuls/goval-dictionary fetch suse -opensuse 13.2
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -suse-enterprise-server 12  
+    vuls/goval-dictionary fetch suse -suse-enterprise-server 12  
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-oracle 
+    vuls/goval-dictionary fetch oracle 
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-amazon  
+    vuls/goval-dictionary fetch amazon  
 
 docker run --rm -i \
     -v $PWD:/vuls \
