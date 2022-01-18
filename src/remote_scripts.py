@@ -18,12 +18,10 @@ docker pull vuls/gost
 docker pull vuls/vuls
 
 PWD=/home/ubuntu/vuls/
-for i in `seq 2002 $(date +"%Y")`; do \
-    docker run --rm -i\
-    -v $PWD:/vuls \
-    -v $PWD/go-cve-dictionary-log:/var/log/vuls \
-    vuls/go-cve-dictionary fetchnvd -years $i; \
-  done
+docker run --rm -i\
+-v $PWD:/vuls \
+-v $PWD/go-cve-dictionary-log:/var/log/vuls \
+vuls/go-cve-dictionary fetch nvd 
 
 docker run --rm -i \
     -v $PWD:/vuls \
