@@ -89,5 +89,10 @@ optional arguments:
 1. connect to the EC2 instance created ```ssh ubuntu@PUBLICIP -i KEYPAIR.pem```
 2. watch the progress ```tail /var/log/user-data.log```
 
+### Contact Us
+For technical information, contact us at support@lightspin.io.
+
+Want to see this capability on steroids? Check [Lightspin.io](https://lightspin.io)
+
 ## License
 This repository is available under the [Apache License 2.0](https://github.com/lightspin-tech/red-detector/blob/main/LICENSE).
