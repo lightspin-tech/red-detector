@@ -1,8 +1,8 @@
 import json
 import random
 import time
-
 import boto3
+import subprocess
 import paramiko
 import requests
 from botocore.exceptions import ClientError, WaiterError
@@ -12,14 +12,16 @@ from src import remote_scripts
 
 
 class Scanner:
-    def __init__(self, logger, region):
+    def __init__(self, logger, region, key_pair_name):
         self.logger = logger
         self.region = region
+        self.key_pair_name = key_pair_name
         self.client = boto3.client('ec2', region_name=region)
         self.ec2 = boto3.resource('ec2', region_name=region)
         self.keypair_name = None
+        self.public_ip = ""
 
-    def create_keypair(self, key_name='red_detector_key'):
+    def create_keypair(self, key_name):
         try:
             new_keypair = self.ec2.create_key_pair(KeyName=key_name)
         except ClientError as err:
@@ -30,9 +32,10 @@ class Scanner:
                     return key_name
             self.logger.error(f"create key pair: {err}")
             exit(99)
-        self.logger.info(f'creating key pair: "red_detector_key"')
-        with open('red_detector_key.pem', 'w') as f:
+        self.logger.info('creating key pair: {red_detector_key}'.format(red_detector_key=self.key_pair_name))
+        with open(self.key_pair_name+'.pem', 'w') as f:  # NEED TO OPEN A LOCAL FILE FOR "OLD" KEY PAIR TOO.
             f.write(new_keypair.key_material)
+            output = subprocess.getoutput("chmod 400 "+self.key_pair_name+'.pem')
         return key_name
 
     @staticmethod
@@ -137,7 +140,7 @@ class Scanner:
                 MinCount=1,
                 MaxCount=1,
                 InstanceType='t2.large',
-                KeyName=self.keypair_name,
+                KeyName=self.key_pair_name,
                 UserData=user_data,
                 SecurityGroupIds=[
                     security_group_id,
@@ -173,6 +176,7 @@ class Scanner:
             self.logger.error(f"describe instances: {err}")
             exit(99)
         ec2_instance_public_ip = ec2_instance_describe['Reservations'][0]['Instances'][0]['PublicIpAddress']
+        self.public_ip = ec2_instance_public_ip
         self.logger.info(f"EC2 instance: {ec2_instance_id} is running ({ec2_instance_public_ip})")
         return ec2_instance_id, ec2_instance_public_ip, report_service_port
 
@@ -208,14 +212,14 @@ class Scanner:
     def scan_and_report(self, ec2_instance_public_ip, report_service_port, ec2_instance_id, snapshot_id):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        privet_key = paramiko.RSAKey.from_private_key_file("red_detector_key.pem")
+        privet_key = paramiko.RSAKey.from_private_key_file(self.key_pair_name+".pem")
         connect = 0
         while not connect:
             try:
                 ssh.connect(hostname=ec2_instance_public_ip, username='ubuntu', pkey=privet_key)
                 connect = 1
             except Exception as err:
-                self.logger.error(f"failed connecting to EC2 instance: {err}")
+                self.logger.error(f"failed connecting to EC2 instance: {err}. Trying again...")
 
         wait_4_update = True
         c = 0
@@ -249,6 +253,8 @@ class Scanner:
                 remote_scripts.script_b.format(port=report_service_port, ip_address=ec2_instance_public_ip,
                                                instance_id=ec2_instance_id,
                                                mount_point=mount))
+
+
             stdout = stdout.readlines()
             for line in stdout:
                 self.logger.debug(line)
@@ -264,7 +270,9 @@ class Scanner:
                 stdout = stdout.readlines()
                 for line in stdout:
                     self.logger.debug(line)
-                self.logger.info(f"Check the report at: http://{ec2_instance_public_ip}:{report_service_port}")
+                with open("results.txt","a") as f:
+                    f.write(f"Check the report at: http://{ec2_instance_public_ip}:{report_service_port} \n")
+                # self.logger.info(f"Check the report at: http://{ec2_instance_public_ip}:{report_service_port}")
                 wait_4_update = False
             else:
                 c += 1
@@ -274,6 +282,14 @@ class Scanner:
             self.logger.error("generating scan report failed")
             exit(99)
 
+        stdin, stdout, stderr = ssh.exec_command(
+            remote_scripts.script_d, get_pty=True)
+
+        output = subprocess.getoutput('scp -i {ec2keypair} ubuntu@{ec2ip}:/home/ubuntu/rootkit.json . -y'
+                                      .format(ec2keypair=self.key_pair_name+".pem", ec2ip=self.public_ip))
+
+        stdout = stdout.readlines()
+        # self.logger.info("after running d:", stdout)
         ssh.close()
         self.logger.info(f"cleaning up snapshot: {snapshot_id}")
         try:
