@@ -7,66 +7,61 @@ apt install docker.io build-essential binutils colorized-logs -y
 mkdir -p /home/ubuntu/vuls
 cd /home/ubuntu/
 wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
-wget ftp://ftp.pangeia.com.br/pub/seg/pac/chkrootkit.tar.gz
-mkdir -p chkrootkit && cd chkrootkit
-tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
-make sense
+sudo apt install chkrootkit -y
 
 cd /home/ubuntu/vuls
-docker pull vuls/go-cve-dictionary
-docker pull vuls/goval-dictionary
-docker pull vuls/gost
-docker pull vuls/go-exploitdb
-docker pull vuls/gost
-docker pull vuls/vuls
+docker pull vuls/go-cve-dictionary:v0.9.0
+docker pull vuls/goval-dictionary:v0.6.1
+docker pull docker pull vuls/go-exploitdb:v0.4.1
+docker pull docker pull vuls/gost:v0.4.0
+
+docker pull vuls/vuls:v0.19.2
 
 PWD=/home/ubuntu/vuls/
-for i in `seq 2002 $(date +"%Y")`; do \
-    docker run --rm -i\
-    -v $PWD:/vuls \
-    -v $PWD/go-cve-dictionary-log:/var/log/vuls \
-    vuls/go-cve-dictionary fetchnvd -years $i; \
-  done
+docker run --rm -i \
+-v $PWD:/vuls \
+-v $PWD/go-cve-dictionary-log:/var/log/vuls \
+vuls/go-cve-dictionary fetch nvd 
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-redhat 5 6 7 8
+    vuls/goval-dictionary fetch redhat 5 6 7 8
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-debian 7 8 9 10
+    vuls/goval-dictionary fetch debian 7 8 9 10
     
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
+    vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-ubuntu 14 16 18 19 20
+    vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -opensuse 13.2
+    vuls/goval-dictionary fetch suse -opensuse 13.2
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -suse-enterprise-server 12  
+    vuls/goval-dictionary fetch suse -suse-enterprise-server 12  
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-oracle 
+    vuls/goval-dictionary fetch oracle 
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-amazon  
+    vuls/goval-dictionary fetch amazon  
 
 docker run --rm -i \
     -v $PWD:/vuls \
@@ -257,9 +252,7 @@ sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/
 sudo su -c "chroot /vol /root/lynis/run.sh" | ansi2html -l > /home/ubuntu/nginx/html/lynis_report.html
 
 # Chkrootkit scan
-cd /home/ubuntu/chkrootkit
-# sudo ./chkrootkit -r /vol | sed -n '/INFECTED/,/Searching/p' | head -n -1 | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
-sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
+sudo chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
 
 # Vuls scan
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
