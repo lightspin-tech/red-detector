@@ -1,4 +1,5 @@
 script_a = '''#!/bin/bash -ex
+
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 apt-get update
@@ -7,82 +8,64 @@ apt install docker.io build-essential binutils colorized-logs -y
 mkdir -p /home/ubuntu/vuls
 cd /home/ubuntu/
 wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
-wget ftp://ftp.pangeia.com.br/pub/seg/pac/chkrootkit.tar.gz
+
+apt-get install chkrootkit -y
+
 mkdir -p chkrootkit && cd chkrootkit
-tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
-make sense
 
 cd /home/ubuntu/vuls
-docker pull vuls/go-cve-dictionary
-docker pull vuls/goval-dictionary
-docker pull vuls/gost
-docker pull vuls/go-exploitdb
-docker pull vuls/gost
-docker pull vuls/vuls
+sudo docker pull vuls/go-cve-dictionary
+sudo docker pull vuls/goval-dictionary
+sudo docker pull vuls/gost
+sudo docker pull vuls/go-exploitdb
+sudo docker pull vuls/gost
+sudo docker pull vuls/vuls
+sudo apt install python3-pip -y
+pip3 install subprocess.run
+pip install subprocess.run
 
-PWD=/home/ubuntu/vuls/
-for i in `seq 2002 $(date +"%Y")`; do \
-    docker run --rm -i\
+
+cd /home/ubuntu/vuls
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
-    vuls/go-cve-dictionary fetchnvd -years $i; \
-  done
-
-docker run --rm -i \
+    vuls/go-cve-dictionary fetch nvd
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-redhat 5 6 7 8
+    vuls/goval-dictionary fetch redhat 5 6 7 8
 
-docker run --rm -i \
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-debian 7 8 9 10
-    
-docker run --rm -i \
+    vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
-
-docker run --rm -i \
+    vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-ubuntu 14 16 18 19 20
+    vuls/goval-dictionary fetch oracle 
 
-docker run --rm -i \
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -opensuse 13.2
+    vuls/goval-dictionary fetch amazon  
 
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -suse-enterprise-server 12  
-
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-oracle 
-
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-amazon  
-
-docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/gost-log:/var/log/gost \
-    vuls/gost fetch redhat
-
-docker run --rm -i \
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-exploitdb-log:/var/log/go-exploitdb \
     vuls/go-exploitdb fetch exploitdb
 
-docker run --rm -i \
+sudo docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
-    
+
+
+touch config_scan.toml
+
 cat > config_scan.toml <<EOF
 [servers]
 [servers.host]
@@ -115,24 +98,30 @@ SQLite3Path = "/vuls/go-exploitdb.sqlite3"
 type = "sqlite3"
 SQLite3Path = "/vuls/go-msfdb.sqlite3"
 EOF
-
 touch /tmp/userData.finished
 '''
 
 script_b = '''
+
 set -ex
 
 sudo mkdir -p /vol/
+
 sudo mount {mount_point} /vol/
 
 FILE="/vol/usr/sbin/sshd"
-if [ -f "$FILE" ]; then
+
 /bin/rm -f ~/.ssh/id_rsa_vuls
+
 /bin/rm -f ~/.ssh/id_rsa_vuls.pub
 ssh-keygen -q -f ~/.ssh/id_rsa_vuls -N ""
+
 sudo cat ~/.ssh/id_rsa_vuls.pub > /tmp/tmp_authorized_keys
+
 sudo mv /tmp/tmp_authorized_keys /vol/root/.ssh/tmp_authorized_keys
-sudo chown root:root /vol/root/.ssh/tmp_authorized_keys 
+
+sudo chown root:root /vol/root/.ssh/tmp_authorized_keys
+
 sudo chmod 600 /vol/root/.ssh/tmp_authorized_keys
 
 sudo mount -t proc none /vol/proc
@@ -141,9 +130,9 @@ sudo mount -o bind /sys /vol/sys
 sudo mount -o bind /run /vol/run
 
 sudo chroot /vol /bin/mount devpts /dev/pts -t devpts
-
 # Reporting
 mkdir -p /home/ubuntu/nginx/html
+
 cat > /home/ubuntu/nginx/default.conf <<EOF
 server {{
     listen       80;
@@ -159,7 +148,7 @@ server {{
         root   /usr/share/nginx/html;
         index  index.html index.htm;
     }}
-  
+
     #error_page  404              /404.html;
 
     # redirect server error pages to the static page /50x.html
@@ -248,23 +237,35 @@ cat > /home/ubuntu/nginx/html/index.html <<EOF
 </body>
 </html>
 EOF
+
 sudo docker run --name docker-nginx -p {port}:80 -d -v /home/ubuntu/nginx/html:/usr/share/nginx/html -v /home/ubuntu/nginx/default.conf:/etc/nginx/conf.d/default.conf nginx
 
 # Lynis audit
-sudo cp /home/ubuntu/lynis-3.0.3.tar.gz /vol/root/
-sudo su -c "chroot /vol tar xvf /root/lynis-3.0.3.tar.gz -C /root/"
-sudo su -c "chroot /vol printf 'cd /root/lynis/\n./lynis audit system\n' > /vol/root/lynis/run.sh && chmod +x /vol/root/lynis/run.sh"
-sudo su -c "chroot /vol /root/lynis/run.sh" | ansi2html -l > /home/ubuntu/nginx/html/lynis_report.html
+ 
+sudo su -c "chroot /vol apt install lynis -y"
+sudo su -c "chroot /vol lynis audit system" | ansi2html > /home/ubuntu/nginx/html/lynis_report.html
 
-# Chkrootkit scan
+# Chkrootkit scan 
 cd /home/ubuntu/chkrootkit
 # sudo ./chkrootkit -r /vol | sed -n '/INFECTED/,/Searching/p' | head -n -1 | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
-sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
+# sudo ./chkrootkit -r /vol | ansi2html -l > /home/ubuntu/nginx/html/chkrootkit_report.html
+sudo touch chkrootkit_script.py
+sudo chmod 777 chkrootkit_script.py
 
+cat > chkrootkit_script.py <<EOF
+import subprocess
+command = "sudo chkrootkit -r /vol | ansi2html"
+chkrootkit_output = subprocess.getoutput(command)
+create_folders1=subprocess.getoutput("cd /; cd home/ubuntu; sudo mkdir nginx; cd nginx; sudo mkdir html")
+create_file=subprocess.getoutput("cd /; cd home/ubuntu; cd nginx/html; sudo touch chkrootkit_report.html")
+permissions = subprocess.getoutput("cd; cd nginx/html; sudo chmod 777 chkrootkit_report.html")
+with open ("/home/ubuntu/nginx/html/chkrootkit_report.html",'w') as f:
+    f.write(str(chkrootkit_output))
+EOF
+python3 chkrootkit_script.py
 # Vuls scan
 sudo su -c "chroot /vol /usr/sbin/sshd -p 2222 -o 'AuthorizedKeysFile=/root/.ssh/tmp_authorized_keys' -o 'AuthorizedKeysCommand=none' -o 'AuthorizedKeysCommandUser=none' -o 'GSSAPIAuthentication=no' -o 'UseDNS=no'"
 
-echo "Creating ssh config"
 sudo cat > ~/.ssh/config <<EOF
 Host *
     StrictHostKeyChecking no
@@ -272,6 +273,8 @@ EOF
 
 PWD=/home/ubuntu/vuls/
 cd /home/ubuntu/vuls
+
+sudo apt-get install debian-goodies -y
 
 echo "Scanning..."
 sudo docker run --rm -i \
@@ -283,8 +286,21 @@ sudo docker run --rm -i \
 vuls/vuls scan \
 -config=./config_scan.toml
 
+sudo docker run --rm -i \
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch ubuntu 19 20
+    
+sudo docker run --rm -i \
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch amazon 2
+    
+sudo docker run --rm -i \
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch amazon
 
-echo "Creating report..."
 sudo docker run --rm -i \
     -v /home/ubuntu/.ssh:/root/.ssh:ro \
     -v /home/ubuntu/vuls:/vuls \
@@ -296,9 +312,7 @@ sudo docker run --rm -i \
 
 touch /tmp/script.finished
 sudo pkill -9 -f "/usr/sbin/sshd -p 2222" & sudo umount /vol/proc  & sudo umount /vol/sys & sudo umount /vol/run & sudo umount /vol/dev/pts & sudo umount /vol/dev & sudo umount {mount_point}
-fi
 '''
-
 script_c = '''
 set -ex
 echo "Starting report webUI..."
