@@ -7,9 +7,9 @@ apt install docker.io build-essential binutils colorized-logs -y
 mkdir -p /home/ubuntu/vuls
 cd /home/ubuntu/
 wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
-wget ftp://ftp.pangeia.com.br/pub/seg/pac/chkrootkit.tar.gz
+wget https://fossies.org/linux/misc/chkrootkit-0.55.tar.gz 
 mkdir -p chkrootkit && cd chkrootkit
-tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
+tar xvf /home/ubuntu/chkrootkit-0.55.tar.gz --strip-components 1
 make sense
 
 cd /home/ubuntu/vuls
@@ -21,67 +21,65 @@ docker pull vuls/gost
 docker pull vuls/vuls
 
 PWD=/home/ubuntu/vuls/
-for i in `seq 2002 $(date +"%Y")`; do \
-    docker run --rm -i\
+docker run --rm -i\
     -v $PWD:/vuls \
     -v $PWD/go-cve-dictionary-log:/var/log/vuls \
-    vuls/go-cve-dictionary fetchnvd -years $i; \
-  done
+    vuls/go-cve-dictionary --dbpath /vuls/cve.sqlite3 fetch nvd 
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-redhat 5 6 7 8
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch redhat 5 6 7 8
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-debian 7 8 9 10
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch debian 7 8 9 10
     
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-ubuntu 14 16 18 19 20
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch ubuntu 14 16 18 19 20 22
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -opensuse 13.2
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch suse --suse-type opensuse 13.2
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -suse-enterprise-server 12  
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch suse --suse-type suse-enterprise-server 12  
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-oracle 
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch oracle 
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-amazon  
+    vuls/goval-dictionary --dbpath /vuls/oval.sqlite3 fetch amazon  
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/gost-log:/var/log/gost \
-    vuls/gost fetch redhat
+    vuls/gost --dbpath /vuls/gost.sqlite3 fetch redhat
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-exploitdb-log:/var/log/go-exploitdb \
-    vuls/go-exploitdb fetch exploitdb
+    vuls/go-exploitdb --dbpath /vuls/go-exploitdb.sqlite3 fetch exploitdb
 
 docker run --rm -i \
     -v $PWD:/vuls \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
-    vuls/go-msfdb fetch msfdb
+    vuls/go-msfdb --dbpath /vuls/go-msfdb.sqlite3 fetch msfdb
     
 cat > config_scan.toml <<EOF
 [servers]
@@ -153,7 +151,7 @@ server {{
     #charset koi8-r;
     #access_log  /var/log/nginx/host.access.log  main;
     location /vuls/ {{
-	proxy_pass http://172.17.0.1:8000/;
+    proxy_pass http://172.17.0.1:8000/;
     }}
     location / {{
         root   /usr/share/nginx/html;
@@ -292,6 +290,7 @@ sudo docker run --rm -i \
     -v /etc/localtime:/etc/localtime:ro \
     vuls/vuls report \
     -format-list \
+    -results-dir=/vuls/results
     -config=./config_db.toml
 
 touch /tmp/script.finished
