@@ -151,7 +151,7 @@ server {{
     #charset koi8-r;
     #access_log  /var/log/nginx/host.access.log  main;
     location /vuls/ {{
-    proxy_pass http://172.17.0.1:8000/;
+        proxy_pass http://172.17.0.1:8000/;
     }}
     location / {{
         root   /usr/share/nginx/html;
