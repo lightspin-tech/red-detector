@@ -2,14 +2,14 @@ script_a = '''#!/bin/bash -ex
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 apt-get update
-apt install docker.io build-essential binutils colorized-logs -y
+apt install docker.io build-essential binutils colorized-logs unzip -y
 
 mkdir -p /home/ubuntu/vuls
 cd /home/ubuntu/
 wget https://downloads.cisofy.com/lynis/lynis-3.0.3.tar.gz
-wget ftp://ftp.pangeia.com.br/pub/seg/pac/chkrootkit.tar.gz
-mkdir -p chkrootkit && cd chkrootkit
-tar xvf /home/ubuntu/chkrootkit.tar.gz --strip-components 1
+wget https://github.com/Magentron/chkrootkit/archive/refs/heads/master.zip
+unzip master.zip
+mv chkrootkit-master/ chkrootkit/ && cd chkrootkit
 make sense
 
 cd /home/ubuntu/vuls
@@ -17,69 +17,69 @@ docker pull vuls/go-cve-dictionary
 docker pull vuls/goval-dictionary
 docker pull vuls/gost
 docker pull vuls/go-exploitdb
-docker pull vuls/gost
+docker pull vuls/go-msfdb
 docker pull vuls/vuls
 
 PWD=/home/ubuntu/vuls/
 for i in `seq 2002 $(date +"%Y")`; do \
     docker run --rm -i\
-    -v $PWD:/vuls \
-    -v $PWD/go-cve-dictionary-log:/var/log/vuls \
-    vuls/go-cve-dictionary fetchnvd -years $i; \
+    -v $PWD:/go-cve-dictionary \
+    -v $PWD/go-cve-dictionary-log:/var/log/go-cve-dictionary \
+    vuls/go-cve-dictionary fetch nvd $i; \
   done
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-redhat 5 6 7 8
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch redhat 5 6 7 8
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-debian 7 8 9 10
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch debian 7 8 9 10
     
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch alpine 3.3 3.4 3.5 3.6 3.7 3.8 3.9 3.10 3.11
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-ubuntu 14 16 18 19 20
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch ubuntu 14 16 18 19 20
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -opensuse 13.2
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch suse --suse-type opensuse 13.2
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-suse -suse-enterprise-server 12  
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch suse --suse-type suse-enterprise-server 12
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-oracle 
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch oracle
 
 docker run --rm -i \
-    -v $PWD:/vuls \
-    -v $PWD/goval-dictionary-log:/var/log/vuls \
-    vuls/goval-dictionary fetch-amazon  
+    -v $PWD:/goval-dictionary \
+    -v $PWD/goval-dictionary-log:/var/log/goval-dictionary \
+    vuls/goval-dictionary fetch amazon
 
 docker run --rm -i \
-    -v $PWD:/vuls \
+    -v $PWD:/gost \
     -v $PWD/gost-log:/var/log/gost \
     vuls/gost fetch redhat
 
 docker run --rm -i \
-    -v $PWD:/vuls \
+    -v $PWD:/go-exploitdb \
     -v $PWD/go-exploitdb-log:/var/log/go-exploitdb \
     vuls/go-exploitdb fetch exploitdb
 
 docker run --rm -i \
-    -v $PWD:/vuls \
+    -v $PWD:/go-msfdb \
     -v $PWD/go-msfdb-log:/var/log/go-msfdb \
     vuls/go-msfdb fetch msfdb
     
